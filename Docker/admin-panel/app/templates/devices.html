@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Sensio - Dispositivos{% endblock %}
+{% block content %}
+<header>
+  <h1>Dispositivos (ultimas 24h)</h1>
+  <a href="{{ url_for('main.logout') }}">Cerrar sesion</a>
+</header>
+
+{% if not devices %}
+  <p>No se ha recibido telemetria de ningun dispositivo en las ultimas 24 horas.</p>
+{% else %}
+<table>
+  <thead>
+    <tr>
+      <th>Device ID</th>
+      <th>Ultimo dato (UTC)</th>
+      <th>CVOL (ppm)</th>
+      <th>mq135_adc</th>
+      <th>Coordenadas</th>
+      <th>Firmware</th>
+      <th>RSSI</th>
+      <th>Calibrado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for d in devices %}
+    <tr>
+      <td>{{ d.device_id }}</td>
+      <td>{{ d.last_seen.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+      <td>{{ "%.2f"|format(d.cvol) if d.cvol is defined else "-" }}</td>
+      <td>{{ d.mq135_adc | int if d.mq135_adc is defined else "-" }}</td>
+      <td>{{ "%.5f, %.5f"|format(d.lat, d.lon) if d.lat is defined and d.lon is defined else "-" }}</td>
+      <td>{{ d.fw if d.fw is defined else "-" }}</td>
+      <td>{{ d.rssi | int if d.rssi is defined else "-" }} dBm</td>
+      <td>{{ "si" if d.mq135_cal == "true" or d.mq135_cal == True else "no" }}</td>
+      <td>
+        <form class="inline" method="post" action="{{ url_for('main.calibrate', device_id=d.device_id) }}">
+          <input type="number" name="value" placeholder="ADC0" required>
+          <button type="submit" title="Calibrar MQ135 (modo manual)">Calibrar</button>
+        </form>
+        <form class="inline" method="post" action="{{ url_for('main.set_coordinates', device_id=d.device_id) }}">
+          <input type="number" step="any" name="lat" placeholder="lat" required>
+          <input type="number" step="any" name="lon" placeholder="lon" required>
+          <button type="submit" title="Cambiar coordenadas GPS">Coordenadas</button>
+        </form>
+        <form class="inline" method="post" action="{{ url_for('main.rename_device', device_id=d.device_id) }}">
+          <input type="text" name="new_device_id" placeholder="nuevo ID" maxlength="31" required>
+          <button type="submit" title="Cambiar ID del dispositivo">Renombrar</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

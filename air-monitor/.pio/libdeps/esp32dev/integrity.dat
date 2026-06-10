@@ -1,0 +1,11 @@
+bblanchon/ArduinoJson@^6.21.4
+links2004/WebSockets@^2.4.1
+knolleary/PubSubClient@^2.8
+adafruit/Adafruit ADS1X15@^2.5.0
+SPI
+paulstoffregen/OneWire@^2.3.8
+ESP32Async/AsyncTCP @ 3.4.10
+https://github.com/mikalhart/ESP32-OTA-Pull.git
+Preferences
+milesburton/DallasTemperature@^3.11.0
+ESP32Async/ESPAsyncWebServer @ 3.10.0

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Sensio - Login{% endblock %}
+{% block content %}
+<div style="max-width: 320px; margin: 4rem auto;">
+  <h1>Sensio</h1>
+  <p>Administrador de dispositivos</p>
+  <form method="post">
+    <div style="margin-bottom: 0.6rem;">
+      <label for="username">Usuario</label><br>
+      <input type="text" id="username" name="username" style="width: 100%;" required>
+    </div>
+    <div style="margin-bottom: 0.6rem;">
+      <label for="password">Contraseña</label><br>
+      <input type="password" id="password" name="password" style="width: 100%;" required>
+    </div>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}

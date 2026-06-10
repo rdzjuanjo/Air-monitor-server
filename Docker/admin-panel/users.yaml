@@ -1,0 +1,9 @@
+# Usuarios del panel de administracion.
+# El password de cada usuario se guarda como hash (werkzeug pbkdf2:sha256), nunca en texto plano.
+#
+# Para generar un nuevo hash:
+#   python3 -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('tu-password'))"
+#
+# Usuario por defecto: admin / changeme  -- CAMBIAR antes de desplegar.
+users:
+  admin: "pbkdf2:sha256:600000$87af159d660602a6$fdeb30c0962eab2f0466e6ed1b391011c49672c36bbd46239719aed95bbe4d43"

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Sensio - Administrador{% endblock %}</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      margin: 0;
+      padding: 2rem;
+    }
+    a { color: #38bdf8; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    th, td {
+      border: 1px solid #334155;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.9rem;
+    }
+    th { background: #1e293b; }
+    .flash {
+      padding: 0.6rem 1rem;
+      border-radius: 0.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .flash.success { background: #14532d; }
+    .flash.error { background: #7f1d1d; }
+    form.inline { display: flex; gap: 0.3rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.3rem; }
+    input[type="text"], input[type="number"], input[type="password"] {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #f1f5f9;
+      border-radius: 0.3rem;
+      padding: 0.3rem 0.5rem;
+      width: 6.5rem;
+    }
+    button {
+      background: #38bdf8;
+      color: #0f172a;
+      border: none;
+      border-radius: 0.3rem;
+      padding: 0.35rem 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.85; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</body>
+</html>
