@@ -6,4 +6,5 @@
 #
 # Usuario por defecto: admin / changeme  -- CAMBIAR antes de desplegar.
 users:
-  admin: "pbkdf2:sha256:600000$87af159d660602a6$fdeb30c0962eab2f0466e6ed1b391011c49672c36bbd46239719aed95bbe4d43"
+  juanjo: "scrypt:32768:8:1$oHOMBxij1ydTRklL$2208167346937cdb2e5cd1858b2be324d5840bf552dc9bd2c3169c486210326b8a6c1be305d21f176d4329db96b2a8e4fd09bc6b037383d29e621d500598c0a3"
+
