@@ -2,6 +2,20 @@ from __future__ import annotations
 
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+
+
+def build_empty_map(center_lat: float, center_lon: float, zoom: float):
+    fig = go.Figure(go.Scattermapbox())
+    fig.update_layout(
+        mapbox_style="open-street-map",
+        mapbox={"center": {"lat": float(center_lat), "lon": float(center_lon)}, "zoom": float(zoom)},
+        margin={"r": 0, "t": 50, "l": 0, "b": 0},
+        title="Sin datos para mostrar",
+        height=650,
+        uirevision="map-interaction",
+    )
+    return fig
 
 
 def build_animated_map(
@@ -13,7 +27,7 @@ def build_animated_map(
     high_threshold: float,
 ):
     if df.empty:
-        return None
+        return build_empty_map(center_lat=center_lat, center_lon=center_lon, zoom=zoom)
 
     cmin = float(df["value"].min())
     cmax = max(float(high_threshold), cmin + 1e-9)

@@ -17,6 +17,11 @@ st.title("Dashboard dinamico espacial - ultimas 24 horas")
 # Ajustalo segun tu parametro ambiental.
 HIGH_THRESHOLD_VALUE = 100.0
 
+# Centro por default: punto medio entre El Salto, Jalisco y Las Pintas.
+DEFAULT_CENTER_LAT = 20.5470
+DEFAULT_CENTER_LON = -103.2537
+DEFAULT_ZOOM = 11.5
+
 
 @st.cache_data(show_spinner=False)
 def _fetch(settings_dict: dict, selected_stations: tuple[str, ...]):
@@ -43,7 +48,7 @@ selected_stations = tuple(
     [s.strip() for s in raw_station_filter.split(",") if s.strip()]
 )
 
-map_zoom = st.sidebar.slider("Zoom inicial", min_value=1.0, max_value=15.0, value=6.0, step=0.5)
+map_zoom = st.sidebar.slider("Zoom inicial", min_value=1.0, max_value=15.0, value=DEFAULT_ZOOM, step=0.5)
 blur = st.sidebar.slider("Blur (modo calor)", min_value=1, max_value=50, value=18, step=1)
 
 if st.sidebar.button("Recargar datos", type="primary"):
@@ -53,8 +58,8 @@ with st.spinner("Consultando InfluxDB..."):
     raw_df = _fetch(settings.__dict__, selected_stations)
 
 if raw_df.empty:
-    default_center_lat = 0.0
-    default_center_lon = 0.0
+    default_center_lat = DEFAULT_CENTER_LAT
+    default_center_lon = DEFAULT_CENTER_LON
 else:
     default_center_lat = float(raw_df["lat"].median())
     default_center_lon = float(raw_df["lon"].median())
@@ -97,12 +102,10 @@ col2.metric("Frames disponibles", meta.frame_count)
 col3.metric("Estaciones activas", meta.station_count)
 col4.metric("Cobertura media", f"{meta.coverage_mean:.1f}%")
 
-if raw_df.empty:
-    st.warning("No hay datos para las ultimas 24 horas con los filtros actuales.")
-    st.stop()
-
-value_min = float(frame_df["value"].min())
 high_threshold = float(HIGH_THRESHOLD_VALUE)
+
+if raw_df.empty:
+    st.warning("No hay datos para las ultimas 24 horas con los filtros actuales. Mostrando mapa vacio.")
 
 if not issues.empty:
     st.warning("Se detectaron estaciones con lat/lon inconsistentes en el periodo.")
