@@ -21,7 +21,7 @@
 // ----------------------------------------------------------------------------
 
 /** Dirección del broker MQTT */
-#define CFG_TELEMETRY_BROKER                "mqtt.riosvivos.org"
+#define CFG_TELEMETRY_BROKER                "mqtt.sensio.mx"
 
 /** Puerto del broker MQTT */
 #define CFG_TELEMETRY_PORT                  1883
@@ -30,7 +30,7 @@
 #define CFG_TELEMETRY_MQTT_PACKET_SIZE      768
 
 /** Prefijo base del topic de telemetría (se añade el device_id al final) */
-#define CFG_TELEMETRY_TOPIC_BASE            "riosvivos/monitoring/"
+#define CFG_TELEMETRY_TOPIC_BASE            "monitoreo/"
 
 // ----------------------------------------------------------------------------
 // Intervalos de muestreo y publicación
@@ -53,7 +53,7 @@
 // ----------------------------------------------------------------------------
 
 /** URL del JSON de control de versiones OTA */
-#define CFG_OTA_JSON_URL                    "https://ota.riosvivos.org/movocs.json"
+#define CFG_OTA_JSON_URL                    "https://ota.sensio.mx/narizdigital.json"
 
 /** Intervalo entre chequeos OTA (ms) – por defecto 1 hora */
 #define CFG_OTA_CHECK_INTERVAL_MS           3600000UL
@@ -64,7 +64,7 @@
 // ----------------------------------------------------------------------------
 
 /** Versión del firmware (sincronizar con el archivo VERSION) */
-#define CFG_FIRMWARE_VERSION                "2.0.0"
+#define CFG_FIRMWARE_VERSION                "1.0.0"
 
 // ----------------------------------------------------------------------------
 // NTP

@@ -11,6 +11,7 @@ from(bucket: "{bucket}")
   |> filter(fn: (r) => r._measurement == "env_monitoring")
   |> group(columns: ["device_id", "_field"])
   |> last()
+  |> toFloat()
   |> group()
 '''.strip()
 
