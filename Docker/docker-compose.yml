@@ -92,8 +92,11 @@ services:
       MQTT_PORT: "1883"
       MQTT_TOPIC_BASE: riosvivos/monitoring
       SECRET_KEY: ${ADMIN_SECRET_KEY}
+      OTA_DIR: /app/ota
+      OTA_BASE_URL: ${OTA_BASE_URL}
     volumes:
       - ./admin-panel/users.yaml:/app/users.yaml:ro
+      - ota_files:/app/ota
     depends_on:
       - influxdb
       - mosquitto
@@ -120,6 +123,7 @@ services:
       - ./nginx/snippets:/etc/nginx/snippets:ro
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
+      - ota_files:/usr/share/nginx/ota:ro
     depends_on:
       - landing
       - mosquitto
@@ -150,3 +154,4 @@ volumes:
   grafana_data:
   certbot_conf:
   certbot_www:
+  ota_files:

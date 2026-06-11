@@ -18,6 +18,10 @@ def create_app() -> Flask:
     app.config["MQTT_PORT"] = int(os.environ.get("MQTT_PORT", "1883"))
     app.config["MQTT_TOPIC_BASE"] = os.environ.get("MQTT_TOPIC_BASE", "riosvivos/monitoring")
     app.config["USERS_FILE"] = os.environ.get("USERS_FILE", "/app/users.yaml")
+    app.config["OTA_DIR"] = os.environ.get("OTA_DIR", "/app/ota")
+    app.config["OTA_BASE_URL"] = os.environ.get("OTA_BASE_URL", "https://ota.sensio.mx")
+
+    app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024
 
     app.config["USERS"] = load_users(app.config["USERS_FILE"])
 

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Sensio - OTA Firmware{% endblock %}
+{% block content %}
+<header>
+  <h1>Actualizacion OTA - Nariz Digital</h1>
+  <div>
+    <a href="{{ url_for('main.index') }}">Dispositivos</a>
+    &nbsp;|&nbsp;
+    <a href="{{ url_for('main.logout') }}">Cerrar sesion</a>
+  </div>
+</header>
+
+<table>
+  <tbody>
+    <tr><th>Version actual</th><td>{{ manifest.version }}</td></tr>
+    <tr><th>URL del binario</th><td>{{ manifest.url }}</td></tr>
+    <tr><th>MD5</th><td>{{ manifest.md5 if manifest.md5 else "-" }}</td></tr>
+    <tr><th>Firmware subido</th><td>{{ "si" if has_firmware else "no" }}</td></tr>
+  </tbody>
+</table>
+
+<h2>Subir nuevo firmware</h2>
+<form method="post" action="{{ url_for('main.update_ota') }}" enctype="multipart/form-data" class="inline">
+  <label for="version">Version (X.Y.Z):</label>
+  <input type="text" id="version" name="version" placeholder="1.0.1" pattern="\d+\.\d+\.\d+" required>
+  <label for="firmware">Archivo .bin:</label>
+  <input type="file" id="firmware" name="firmware" accept=".bin" required>
+  <button type="submit">Subir y publicar</button>
+</form>
+<p>El archivo se guardara como <code>narizdigital.bin</code> y se actualizara <code>narizdigital.json</code> con la nueva version y MD5.</p>
+{% endblock %}
