@@ -72,33 +72,41 @@ document.querySelectorAll(".device-card").forEach(function (card) {
 
   const mapEl = card.querySelector(".card-map");
   if (mapEl) {
-    const lat = parseFloat(card.dataset.lat);
-    const lon = parseFloat(card.dataset.lon);
-    const map = L.map(mapEl).setView([lat, lon], 15);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-      maxZoom: 19,
-    }).addTo(map);
-    const marker = L.marker([lat, lon], { draggable: true }).addTo(map);
-    const latInput = card.querySelector(".coord-lat");
-    const lonInput = card.querySelector(".coord-lon");
-    marker.on("dragend", function () {
-      const pos = marker.getLatLng();
-      latInput.value = pos.lat.toFixed(6);
-      lonInput.value = pos.lng.toFixed(6);
-    });
-    map.on("click", function (e) {
-      marker.setLatLng(e.latlng);
-      latInput.value = e.latlng.lat.toFixed(6);
-      lonInput.value = e.latlng.lng.toFixed(6);
-    });
-    setTimeout(function () {
-      map.invalidateSize();
-    }, 0);
+    if (typeof L === "undefined") {
+      mapEl.textContent = "No se pudo cargar el mapa (Leaflet no disponible).";
+    } else {
+      try {
+        const lat = parseFloat(card.dataset.lat);
+        const lon = parseFloat(card.dataset.lon);
+        const map = L.map(mapEl).setView([lat, lon], 15);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+          maxZoom: 19,
+        }).addTo(map);
+        const marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+        const latInput = card.querySelector(".coord-lat");
+        const lonInput = card.querySelector(".coord-lon");
+        marker.on("dragend", function () {
+          const pos = marker.getLatLng();
+          latInput.value = pos.lat.toFixed(6);
+          lonInput.value = pos.lng.toFixed(6);
+        });
+        map.on("click", function (e) {
+          marker.setLatLng(e.latlng);
+          latInput.value = e.latlng.lat.toFixed(6);
+          lonInput.value = e.latlng.lng.toFixed(6);
+        });
+        setTimeout(function () {
+          map.invalidateSize();
+        }, 0);
+      } catch (err) {
+        console.error("Error inicializando mapa para", deviceId, err);
+      }
+    }
   }
 
   const chartEl = card.querySelector(".card-chart");
-  if (chartEl) {
+  if (chartEl && typeof Chart !== "undefined") {
     fetch(`/devices/${deviceId}/history`)
       .then((r) => r.json())
       .then((data) => {
@@ -131,18 +139,23 @@ document.querySelectorAll(".device-card").forEach(function (card) {
             },
           },
         });
+      })
+      .catch(function (err) {
+        console.error("Error cargando historial para", deviceId, err);
       });
   }
 
   const renameForm = card.querySelector(".rename-form");
-  renameForm.addEventListener("submit", function (e) {
-    const input = renameForm.querySelector('input[name="new_device_id"]');
-    const newId = input.value.trim();
-    if (newId !== deviceId && existingDeviceIds.includes(newId)) {
-      e.preventDefault();
-      alert(`El ID '${newId}' ya esta en uso por otra estacion.`);
-    }
-  });
+  if (renameForm) {
+    renameForm.addEventListener("submit", function (e) {
+      const input = renameForm.querySelector('input[name="new_device_id"]');
+      const newId = input.value.trim();
+      if (newId !== deviceId && existingDeviceIds.includes(newId)) {
+        e.preventDefault();
+        alert(`El ID '${newId}' ya esta en uso por otra estacion.`);
+      }
+    });
+  }
 });
 </script>
 {% endblock %}
