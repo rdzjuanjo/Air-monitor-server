@@ -21,6 +21,13 @@ server {
     ssl_ciphers         HIGH:!aNULL:!MD5;
 
     location / {
+        # Solo aceptar handshakes de WebSocket; descarta el ruido de bots
+        # que hacen GET/HTTP normal contra este host (evita el spam de
+        # "bad socket read/write" / "malformed packet" en mosquitto).
+        if ($http_upgrade != "websocket") {
+            return 400;
+        }
+
         proxy_pass http://mosquitto:9001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
