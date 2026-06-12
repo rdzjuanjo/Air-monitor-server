@@ -87,6 +87,14 @@ document.querySelectorAll(".device-card").forEach(function (card) {
       latInput.value = pos.lat.toFixed(6);
       lonInput.value = pos.lng.toFixed(6);
     });
+    map.on("click", function (e) {
+      marker.setLatLng(e.latlng);
+      latInput.value = e.latlng.lat.toFixed(6);
+      lonInput.value = e.latlng.lng.toFixed(6);
+    });
+    setTimeout(function () {
+      map.invalidateSize();
+    }, 0);
   }
 
   const chartEl = card.querySelector(".card-chart");
