@@ -63,20 +63,20 @@ def build_animated_map(
         title=None,
         mapbox_style="open-street-map",
         mapbox={"center": {"lat": float(center_lat), "lon": float(center_lon)}, "zoom": float(zoom)},
-        margin={"r": 0, "t": 110, "l": 0, "b": 0},
+        margin={"r": 0, "t": 80, "l": 0, "b": 0},
         uirevision="map-interaction",
     )
 
     # Mueve los controles de animacion (play/pause y linea de tiempo) arriba
-    # del mapa, justo debajo del titulo de la pagina, en filas separadas para
-    # que no se superpongan entre si.
+    # del mapa, justo debajo del titulo de la pagina, en el mismo nivel
+    # (el boton a la izquierda y la linea de tiempo ocupando el resto del ancho).
     if fig.layout.updatemenus:
         updatemenu = fig.layout.updatemenus[0].to_plotly_json()
-        updatemenu.update({"x": 0.0, "y": 1.25, "xanchor": "left", "yanchor": "top"})
+        updatemenu.update({"x": 0.0, "y": 1.15, "xanchor": "left", "yanchor": "top"})
         fig.update_layout(updatemenus=[updatemenu])
     if fig.layout.sliders:
         slider = fig.layout.sliders[0].to_plotly_json()
-        slider.update({"x": 0.0, "y": 1.05, "len": 1.0, "xanchor": "left", "yanchor": "top"})
+        slider.update({"x": 0.15, "y": 1.15, "len": 0.85, "xanchor": "left", "yanchor": "top"})
         fig.update_layout(sliders=[slider])
 
     if show_markers:
