@@ -58,7 +58,10 @@ def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, now_utc: datetime) 
     )
 
 
-def validate_station_coordinates_consistency(df: pd.DataFrame, tolerance_deg: float = 0.0005) -> pd.DataFrame:
+def validate_station_coordinates_consistency(df: pd.DataFrame, tolerance_deg: float = 0.003) -> pd.DataFrame:
+    # El ESP32 aplica jitter GPS de hasta ±0.001° por eje (privacidad), lo que
+    # produce un span normal de hasta ~0.002°. El umbral debe quedar por
+    # encima de eso para no marcar el jitter como un cambio real de ubicacion.
     if df.empty:
         return pd.DataFrame(columns=["station_id", "lat_span", "lon_span", "samples"])
 
