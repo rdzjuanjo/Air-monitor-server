@@ -34,6 +34,8 @@ def build_animated_map(
     high_threshold: float,
     opacity: float = 0.8,
     show_markers: bool = False,
+    marker_size: int = 16,
+    marker_opacity: float = 1.0,
 ):
     if df.empty:
         return build_empty_map(center_lat=center_lat, center_lon=center_lon, zoom=zoom)
@@ -66,31 +68,45 @@ def build_animated_map(
     )
 
     if show_markers:
-        # Marcador solido con la ultima posicion de cada estacion, coloreado
-        # con la misma escala/rango que el heatmap. No es parte de los frames
-        # animados, asi que permanece fijo durante toda la animacion.
-        latest = df.sort_values("time_bucket").groupby("station_id", as_index=False).tail(1)
-        fig.add_trace(
-            go.Scattermapbox(
-                lat=latest["lat"],
-                lon=latest["lon"],
+        # Marcador solido coloreado con la misma escala/rango que el heatmap,
+        # que se mueve y cambia de color en cada frame de la animacion (igual
+        # que el heatmap), ya que se agrega tanto al estado inicial (fig.data)
+        # como a cada fig.frames[i] (frame.data + frame.traces).
+        def _marker_trace(sub: pd.DataFrame) -> go.Scattermapbox:
+            return go.Scattermapbox(
+                lat=sub["lat"],
+                lon=sub["lon"],
                 mode="markers+text",
                 marker={
-                    "size": 16,
-                    "color": latest["value"],
+                    "size": int(marker_size),
+                    "opacity": float(marker_opacity),
+                    "color": sub["value"],
                     "colorscale": HEATMAP_COLORSCALE,
                     "cmin": cmin,
                     "cmax": cmax,
                     "showscale": False,
                 },
-                text=latest["station_id"],
+                text=sub["station_id"],
                 textposition="top right",
                 hovertext=[
-                    f"{s}: {v:.3f}" for s, v in zip(latest["station_id"], latest["value"])
+                    f"{s}: {v:.3f}" for s, v in zip(sub["station_id"], sub["value"])
                 ],
                 hoverinfo="text",
-                name="Estaciones (ultima posicion)",
+                name="Estaciones",
             )
-        )
+
+        groups = {label: sub for label, sub in df.groupby("frame_label")}
+
+        new_frames = []
+        for frame in fig.frames:
+            sub = groups.get(frame.name, df.iloc[0:0])
+            frame.data = list(frame.data) + [_marker_trace(sub)]
+            frame.traces = [0, 1]
+            new_frames.append(frame)
+        fig.frames = new_frames
+
+        first_label = fig.frames[0].name if fig.frames else None
+        first_sub = groups.get(first_label, df.iloc[0:0])
+        fig.add_trace(_marker_trace(first_sub))
 
     return fig

@@ -83,9 +83,28 @@ heatmap_opacity = st.sidebar.slider(
 show_markers = st.sidebar.checkbox(
     "Mostrar marcador solido por estacion",
     value=False,
-    help="Agrega un punto solido (sin difuminado) en la ultima posicion "
-    "de cada estacion, coloreado con la misma escala que el heatmap.",
+    help="Agrega un punto solido (sin difuminado) que se mueve y cambia de "
+    "color en cada frame de la animacion, igual que el heatmap, coloreado "
+    "con la misma escala.",
 )
+if show_markers:
+    marker_size = st.sidebar.slider(
+        "Radio del marcador (px)",
+        min_value=4,
+        max_value=60,
+        value=16,
+        step=1,
+    )
+    marker_opacity = st.sidebar.slider(
+        "Opacidad del marcador",
+        min_value=0.1,
+        max_value=1.0,
+        value=1.0,
+        step=0.05,
+    )
+else:
+    marker_size = 16
+    marker_opacity = 1.0
 
 if st.sidebar.button("Recargar datos", type="primary"):
     _fetch.clear()
@@ -160,6 +179,8 @@ fig = build_animated_map(
     high_threshold=float(high_threshold),
     opacity=float(heatmap_opacity),
     show_markers=bool(show_markers),
+    marker_size=int(marker_size),
+    marker_opacity=float(marker_opacity),
 )
 if fig is None:
     st.warning("No se pudo construir la animacion con los datos actuales.")
