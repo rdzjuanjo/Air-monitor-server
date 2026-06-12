@@ -52,7 +52,26 @@ selected_stations = tuple(
 )
 
 map_zoom = st.sidebar.slider("Zoom inicial", min_value=1.0, max_value=15.0, value=DEFAULT_ZOOM, step=0.5)
-blur = st.sidebar.slider("Blur (modo calor)", min_value=1, max_value=50, value=18, step=1)
+
+st.sidebar.subheader("Apariencia del heatmap")
+blur = st.sidebar.slider("Radio del punto / blur (px)", min_value=1, max_value=50, value=18, step=1)
+high_threshold = st.sidebar.slider(
+    "Umbral alto (escala de color, rojo)",
+    min_value=1.0,
+    max_value=100.0,
+    value=HIGH_THRESHOLD_VALUE,
+    step=0.5,
+    help="Valor de CVOL (ppm) que se pinta en rojo (extremo de la escala). "
+    "Si los valores reales quedan muy por debajo de este numero, los puntos "
+    "se ven palidos/transparentes.",
+)
+heatmap_opacity = st.sidebar.slider(
+    "Opacidad del heatmap",
+    min_value=0.1,
+    max_value=1.0,
+    value=0.8,
+    step=0.05,
+)
 
 if st.sidebar.button("Recargar datos", type="primary"):
     _fetch.clear()
@@ -105,8 +124,6 @@ col2.metric("Frames disponibles", meta.frame_count)
 col3.metric("Estaciones activas", meta.station_count)
 col4.metric("Cobertura media", f"{meta.coverage_mean:.1f}%")
 
-high_threshold = float(HIGH_THRESHOLD_VALUE)
-
 if raw_df.empty:
     st.warning("No hay datos para las ultimas 24 horas con los filtros actuales. Mostrando mapa vacio.")
 
@@ -116,7 +133,15 @@ if not issues.empty:
 
 st.caption("El mapa usa OpenStreetMap. Puedes arrastrar, hacer zoom y moverte libremente.")
 st.caption("Escala de color: verde (bajo) -> amarillo (medio) -> rojo (alto).")
-st.caption(f"Threshold alto fijo en codigo: {high_threshold:.3f}")
+st.caption(
+    f"Parametros actuales -> umbral alto: {high_threshold:.3f} | "
+    f"radio/blur: {blur} | opacidad: {heatmap_opacity:.2f}"
+)
+if not frame_df.empty:
+    st.caption(
+        f"Rango real de 'value' en los datos mostrados: "
+        f"{frame_df['value'].min():.3f} - {frame_df['value'].max():.3f}"
+    )
 
 fig = build_animated_map(
     frame_df,
@@ -125,6 +150,7 @@ fig = build_animated_map(
     zoom=float(map_zoom),
     blur=int(blur),
     high_threshold=float(high_threshold),
+    opacity=float(heatmap_opacity),
 )
 if fig is None:
     st.warning("No se pudo construir la animacion con los datos actuales.")

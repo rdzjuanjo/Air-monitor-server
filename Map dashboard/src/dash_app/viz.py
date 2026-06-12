@@ -25,6 +25,7 @@ def build_animated_map(
     zoom: float,
     blur: int,
     high_threshold: float,
+    opacity: float = 0.8,
 ):
     if df.empty:
         return build_empty_map(center_lat=center_lat, center_lon=center_lon, zoom=zoom)
@@ -38,6 +39,7 @@ def build_animated_map(
         lon="lon",
         z="value",
         radius=max(1, int(blur)),
+        opacity=float(opacity),
         hover_name="station_id",
         hover_data={"value": ":.3f", "frame_label": True, "coverage": ":.1f"},
         animation_frame="frame_label",
