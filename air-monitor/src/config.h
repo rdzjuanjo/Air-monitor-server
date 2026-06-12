@@ -20,8 +20,14 @@
 // Telemetría MQTT
 // ----------------------------------------------------------------------------
 
-/** Dirección del broker MQTT */
+/**
+ * Dirección del broker MQTT.
+ * Sobreescribible vía build_flags (-D CFG_TELEMETRY_BROKER=\"...\")
+ * para usar distintos entornos (ver platformio.ini).
+ */
+#ifndef CFG_TELEMETRY_BROKER
 #define CFG_TELEMETRY_BROKER                "mqtt.sensio.mx"
+#endif
 
 /** Puerto del broker MQTT */
 #define CFG_TELEMETRY_PORT                  1883
@@ -29,8 +35,13 @@
 /** Tamaño máximo del buffer MQTT en bytes */
 #define CFG_TELEMETRY_MQTT_PACKET_SIZE      768
 
-/** Prefijo base del topic de telemetría (se añade el device_id al final) */
+/**
+ * Prefijo base del topic de telemetría (se añade el device_id al final).
+ * Sobreescribible vía build_flags (-D CFG_TELEMETRY_TOPIC_BASE=\"...\").
+ */
+#ifndef CFG_TELEMETRY_TOPIC_BASE
 #define CFG_TELEMETRY_TOPIC_BASE            "monitoreo/"
+#endif
 
 // ----------------------------------------------------------------------------
 // Intervalos de muestreo y publicación
@@ -52,8 +63,13 @@
 // OTA (Over-The-Air)
 // ----------------------------------------------------------------------------
 
-/** URL del JSON de control de versiones OTA */
+/**
+ * URL del JSON de control de versiones OTA.
+ * Sobreescribible vía build_flags (-D CFG_OTA_JSON_URL=\"...\").
+ */
+#ifndef CFG_OTA_JSON_URL
 #define CFG_OTA_JSON_URL                    "https://ota.sensio.mx/narizdigital.json"
+#endif
 
 /** Intervalo entre chequeos OTA (ms) – por defecto 1 hora */
 #define CFG_OTA_CHECK_INTERVAL_MS           3600000UL
