@@ -10,8 +10,8 @@ from src.dash_app.transform import aggregate_to_frames
 from src.dash_app.viz import build_animated_map
 
 
-st.set_page_config(page_title="Dashboard ambiental 24h", layout="wide")
-st.title("Dashboard dinamico espacial - ultimas 24 horas")
+st.set_page_config(page_title="Dashboard ambiental 24h", layout="wide", initial_sidebar_state="collapsed")
+st.title("Mapa dinámico de olores")
 
 # Threshold fijo para valores altos (rojo) en el heatmap.
 # CVOL (MQ135) en ppm: <8 buena, 8-16 media, >16 mala (ver mqGetAirQualityLevel
@@ -56,9 +56,9 @@ map_zoom = st.sidebar.slider("Zoom inicial", min_value=1.0, max_value=15.0, valu
 st.sidebar.subheader("Apariencia del heatmap")
 blur = st.sidebar.slider(
     "Radius del circulo (px)",
-    min_value=1,
-    max_value=100,
-    value=30,
+    min_value=100,
+    max_value=200,
+    value=100,
     step=1,
     help="Tamaño del circulo/heatmap de cada estacion en pixeles (parametro "
     "'radius' de density_mapbox). A mayor valor, mas grande se ve el punto.",
@@ -73,16 +73,10 @@ high_threshold = st.sidebar.slider(
     "Si los valores reales quedan muy por debajo de este numero, los puntos "
     "se ven palidos/transparentes.",
 )
-heatmap_opacity = st.sidebar.slider(
-    "Opacidad del heatmap",
-    min_value=0.1,
-    max_value=1.0,
-    value=0.8,
-    step=0.05,
-)
+heatmap_opacity = 1.0
 show_markers = st.sidebar.checkbox(
     "Mostrar marcador solido por estacion",
-    value=False,
+    value=True,
     help="Agrega un punto solido (sin difuminado) que se mueve y cambia de "
     "color en cada frame de la animacion, igual que el heatmap, coloreado "
     "con la misma escala.",
@@ -146,32 +140,14 @@ map_center_lon = st.sidebar.number_input(
     key="map_center_lon",
 )
 
-frame_df, meta = aggregate_to_frames(
+frame_df, _meta = aggregate_to_frames(
     raw_df,
     step_minutes=settings.step_minutes,
     now_utc=datetime.now(timezone.utc),
 )
 
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Hora actual (UTC)", datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"))
-col2.metric("Frames disponibles", meta.frame_count)
-col3.metric("Estaciones activas", meta.station_count)
-col4.metric("Cobertura media", f"{meta.coverage_mean:.1f}%")
-
 if raw_df.empty:
     st.warning("No hay datos para las ultimas 24 horas con los filtros actuales. Mostrando mapa vacio.")
-
-st.caption("El mapa usa OpenStreetMap. Puedes arrastrar, hacer zoom y moverte libremente.")
-st.caption("Escala de color: verde (bajo) -> amarillo (medio) -> rojo (alto).")
-st.caption(
-    f"Parametros actuales -> umbral alto: {high_threshold:.3f} | "
-    f"radio/blur: {blur} | opacidad: {heatmap_opacity:.2f}"
-)
-if not frame_df.empty:
-    st.caption(
-        f"Rango real de 'value' en los datos mostrados: "
-        f"{frame_df['value'].min():.3f} - {frame_df['value'].max():.3f}"
-    )
 
 fig = build_animated_map(
     frame_df,
