@@ -14,8 +14,11 @@ st.set_page_config(page_title="Dashboard ambiental 24h", layout="wide")
 st.title("Dashboard dinamico espacial - ultimas 24 horas")
 
 # Threshold fijo para valores altos (rojo) en el heatmap.
-# Ajustalo segun tu parametro ambiental.
-HIGH_THRESHOLD_VALUE = 100.0
+# CVOL (MQ135) en ppm: <8 buena, 8-16 media, >16 mala (ver mqGetAirQualityLevel
+# en air-monitor/lib/instruments/MQ/MQSensor.h). Con 100 los valores reales
+# (2-30 ppm) quedaban casi todos en el extremo verde del rango de color,
+# por lo que el punto se veia casi invisible/transparente en el mapa.
+HIGH_THRESHOLD_VALUE = 16.0
 
 # Centro por default: punto medio entre El Salto, Jalisco y Las Pintas.
 DEFAULT_CENTER_LAT = 20.5470
