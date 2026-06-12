@@ -36,6 +36,7 @@ def build_empty_map(
         title="Sin datos para mostrar",
         height=650,
         uirevision="map-interaction",
+        showlegend=False,
     )
     _add_dren_layer(fig, dren_lines, dren_width, dren_color)
     return fig
@@ -99,6 +100,7 @@ def build_animated_map(
         margin={"r": 0, "t": 80, "l": 0, "b": 0},
         uirevision="map-interaction",
         coloraxis_showscale=False,
+        showlegend=False,
     )
 
     # Mueve los controles de animacion (play/pause y linea de tiempo) arriba
