@@ -97,6 +97,7 @@ services:
     volumes:
       - ./admin-panel/users.yaml:/app/users.yaml:ro
       - ota_files:/app/ota
+      - admin_data:/app/data
     depends_on:
       - influxdb
       - mosquitto
@@ -148,3 +149,4 @@ volumes:
   certbot_conf:
   certbot_www:
   ota_files:
+  admin_data:

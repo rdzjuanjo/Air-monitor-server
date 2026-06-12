@@ -2,7 +2,7 @@
 {% block title %}Sensio - Dispositivos{% endblock %}
 {% block content %}
 <header>
-  <h1>Dispositivos (ultimas 24h)</h1>
+  <h1>Dispositivos</h1>
   <div>
     <a href="{{ url_for('main.ota') }}">OTA Firmware</a>
     &nbsp;|&nbsp;
@@ -11,51 +11,130 @@
 </header>
 
 {% if not devices %}
-  <p>No se ha recibido telemetria de ningun dispositivo en las ultimas 24 horas.</p>
+  <p>No se ha recibido telemetria de ningun dispositivo.</p>
 {% else %}
-<table>
-  <thead>
-    <tr>
-      <th>Device ID</th>
-      <th>Ultimo dato (UTC)</th>
-      <th>CVOL (ppm)</th>
-      <th>mq135_adc</th>
-      <th>Coordenadas</th>
-      <th>Firmware</th>
-      <th>RSSI</th>
-      <th>Calibrado</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for d in devices %}
-    <tr>
-      <td>{{ d.device_id }}</td>
-      <td>{{ d.last_seen.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-      <td>{{ "%.2f"|format(d.cvol) if d.cvol is defined else "-" }}</td>
-      <td>{{ d.mq135_adc | int if d.mq135_adc is defined else "-" }}</td>
-      <td>{{ "%.5f, %.5f"|format(d.lat, d.lon) if d.lat is defined and d.lon is defined else "-" }}</td>
-      <td>{{ d.fw if d.fw is defined else "-" }}</td>
-      <td>{{ d.rssi | int if d.rssi is defined else "-" }} dBm</td>
-      <td>{{ "si" if d.mq135_cal == "true" or d.mq135_cal == True else "no" }}</td>
-      <td>
-        <form class="inline" method="post" action="{{ url_for('main.calibrate', device_id=d.device_id) }}">
-          <input type="number" name="value" placeholder="ADC0" required>
-          <button type="submit" title="Calibrar MQ135 (modo manual)">Calibrar</button>
-        </form>
-        <form class="inline" method="post" action="{{ url_for('main.set_coordinates', device_id=d.device_id) }}">
-          <input type="number" step="any" name="lat" placeholder="lat" required>
-          <input type="number" step="any" name="lon" placeholder="lon" required>
-          <button type="submit" title="Cambiar coordenadas GPS">Coordenadas</button>
-        </form>
-        <form class="inline" method="post" action="{{ url_for('main.rename_device', device_id=d.device_id) }}">
-          <input type="text" name="new_device_id" placeholder="nuevo ID" maxlength="31" required>
-          <button type="submit" title="Cambiar ID del dispositivo">Renombrar</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="device-grid">
+  {% for d in devices %}
+  <div class="device-card {{ 'online' if d.online else 'offline' }}"
+       data-device="{{ d.device_id }}"
+       {% if d.lat is defined and d.lon is defined %}data-lat="{{ d.lat }}" data-lon="{{ d.lon }}"{% endif %}>
+
+    <div class="card-header">
+      <span class="status-badge {{ 'online' if d.online else 'offline' }}">
+        {{ "En linea" if d.online else "Fuera de linea" }}
+      </span>
+      <form class="inline rename-form" method="post" action="{{ url_for('main.rename_device', device_id=d.device_id) }}">
+        <input type="text" name="new_device_id" value="{{ d.device_id }}" maxlength="31" required>
+        <button type="submit" title="Cambiar ID del dispositivo">Renombrar</button>
+      </form>
+      {% if not d.online %}
+      <form class="inline" method="post" action="{{ url_for('main.hide', device_id=d.device_id) }}"
+            onsubmit="return confirm('Ocultar {{ d.device_id }} del panel?');">
+        <button type="submit" class="danger" title="Ocultar de la lista">Eliminar</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <div class="card-status">
+      <div><strong>Ultimo mensaje:</strong> {{ d.last_seen.strftime('%Y-%m-%d %H:%M:%S') }} UTC</div>
+      <div><strong>Firmware:</strong> {{ d.fw if d.fw is defined else "-" }}</div>
+      <div><strong>CVOL:</strong> {{ "%.2f"|format(d.cvol) if d.cvol is defined else "-" }} ppm</div>
+      <div><strong>RSSI:</strong> {{ d.rssi | int if d.rssi is defined else "-" }} dBm</div>
+      <div><strong>ADC:</strong> {{ d.mq135_adc | int if d.mq135_adc is defined else "-" }}</div>
+      <div><strong>ADC0:</strong> {{ d.mq135_adc0 | int if d.mq135_adc0 is defined else "-" }}</div>
+    </div>
+
+    {% if d.lat is defined and d.lon is defined %}
+    <div class="card-map"></div>
+    <form class="inline coords-form" method="post" action="{{ url_for('main.set_coordinates', device_id=d.device_id) }}">
+      <input type="hidden" class="coord-lat" name="lat" value="{{ d.lat }}">
+      <input type="hidden" class="coord-lon" name="lon" value="{{ d.lon }}">
+      <button type="submit" title="Guardar la posicion del marcador como nueva ubicacion">Guardar ubicacion</button>
+    </form>
+    {% endif %}
+
+    <canvas class="card-chart"></canvas>
+
+    <form class="inline" method="post" action="{{ url_for('main.calibrate', device_id=d.device_id) }}">
+      <input type="number" step="any" name="value" placeholder="ADC0" required>
+      <button type="submit" title="Calibrar MQ135 (modo manual)">Actualizar ADC0</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
+
+<script>
+const existingDeviceIds = {{ devices | map(attribute="device_id") | list | tojson }};
+
+document.querySelectorAll(".device-card").forEach(function (card) {
+  const deviceId = card.dataset.device;
+
+  const mapEl = card.querySelector(".card-map");
+  if (mapEl) {
+    const lat = parseFloat(card.dataset.lat);
+    const lon = parseFloat(card.dataset.lon);
+    const map = L.map(mapEl).setView([lat, lon], 15);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19,
+    }).addTo(map);
+    const marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+    const latInput = card.querySelector(".coord-lat");
+    const lonInput = card.querySelector(".coord-lon");
+    marker.on("dragend", function () {
+      const pos = marker.getLatLng();
+      latInput.value = pos.lat.toFixed(6);
+      lonInput.value = pos.lng.toFixed(6);
+    });
+  }
+
+  const chartEl = card.querySelector(".card-chart");
+  if (chartEl) {
+    fetch(`/devices/${deviceId}/history`)
+      .then((r) => r.json())
+      .then((data) => {
+        new Chart(chartEl, {
+          type: "line",
+          data: {
+            labels: data.timestamps,
+            datasets: [
+              {
+                label: "ADC",
+                data: data.mq135_adc,
+                borderColor: "#38bdf8",
+                tension: 0.2,
+                pointRadius: 0,
+              },
+              {
+                label: "ADC0",
+                data: data.mq135_adc0,
+                borderColor: "#f59e0b",
+                tension: 0.2,
+                pointRadius: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { ticks: { display: false } },
+            },
+          },
+        });
+      });
+  }
+
+  const renameForm = card.querySelector(".rename-form");
+  renameForm.addEventListener("submit", function (e) {
+    const input = renameForm.querySelector('input[name="new_device_id"]');
+    const newId = input.value.trim();
+    if (newId !== deviceId && existingDeviceIds.includes(newId)) {
+      e.preventDefault();
+      alert(`El ID '${newId}' ya esta en uso por otra estacion.`);
+    }
+  });
+});
+</script>
 {% endblock %}

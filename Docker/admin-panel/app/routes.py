@@ -9,6 +9,7 @@ from flask import (
     Blueprint,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -17,7 +18,8 @@ from flask import (
 from flask_login import login_required, login_user, logout_user
 
 from .auth import User, verify_password
-from .influx_client import get_recent_devices
+from .hidden_devices import hide_device, load_hidden_devices
+from .influx_client import get_device_history, get_recent_devices
 from .mqtt_client import publish_remote_action
 
 bp = Blueprint("main", __name__)
@@ -72,8 +74,25 @@ def logout():
 @bp.route("/")
 @login_required
 def index():
-    devices = get_recent_devices(current_app.config)
+    hidden_ids = load_hidden_devices(current_app.config["HIDDEN_DEVICES_FILE"])
+    devices = get_recent_devices(current_app.config, hidden_ids=hidden_ids)
     return render_template("devices.html", devices=devices)
+
+
+@bp.route("/devices/<device_id>/history")
+@login_required
+def device_history(device_id: str):
+    if not DEVICE_ID_RE.match(device_id):
+        return jsonify({"timestamps": [], "mq135_adc": [], "mq135_adc0": []}), 404
+    return jsonify(get_device_history(current_app.config, device_id))
+
+
+@bp.route("/devices/<device_id>/hide", methods=["POST"])
+@login_required
+def hide(device_id: str):
+    hide_device(current_app.config["HIDDEN_DEVICES_FILE"], device_id)
+    flash(f"{device_id} oculto del panel.", "success")
+    return redirect(url_for("main.index"))
 
 
 @bp.route("/devices/<device_id>/calibrate", methods=["POST"])
@@ -129,6 +148,13 @@ def rename_device(device_id: str):
     if not DEVICE_ID_RE.match(new_id):
         flash("ID de dispositivo invalido (max 31 caracteres, letras, numeros, '-' y '_').", "error")
         return redirect(url_for("main.index"))
+
+    if new_id != device_id:
+        hidden_ids = load_hidden_devices(current_app.config["HIDDEN_DEVICES_FILE"])
+        existing_ids = {d["device_id"] for d in get_recent_devices(current_app.config, hidden_ids=hidden_ids)}
+        if new_id in existing_ids:
+            flash(f"El ID '{new_id}' ya esta en uso por otra estacion.", "error")
+            return redirect(url_for("main.index"))
 
     publish_remote_action(
         current_app.config,
