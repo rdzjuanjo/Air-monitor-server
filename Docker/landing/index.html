@@ -60,9 +60,17 @@
     <h1>Sensio</h1>
     <p class="subtitle">Monitoreo de calidad del aire</p>
     <div class="links">
-      <a class="primary" href="https://mapa.sensio.mx">Dashboard publico</a>
-      <a class="secondary" href="https://admin.sensio.mx">Administrador de dispositivos</a>
+      <a class="primary" id="mapa-link" href="#">Dashboard publico</a>
+      <a class="secondary" id="admin-link" href="#">Administrador de dispositivos</a>
     </div>
   </div>
+  <script>
+    // Construye los enlaces a partir del dominio/protocolo actuales,
+    // para que funcionen tanto en sensio.mx (vps) como en dash.local (lan).
+    var baseDomain = window.location.hostname.replace(/^www\./, '');
+    var protocol = window.location.protocol;
+    document.getElementById('mapa-link').href = protocol + '//mapa.' + baseDomain;
+    document.getElementById('admin-link').href = protocol + '//admin.' + baseDomain;
+  </script>
 </body>
 </html>
