@@ -1,10 +1,10 @@
 # Configuracion local via mDNS - sin SSL, solo HTTP
-# Dashboard publico (Streamlit) - mapa.${DOMAIN}
+# Dashboard publico (Streamlit) - ${DOMAIN}
 
 server {
     listen 80;
     listen [::]:80;
-    server_name mapa.${DOMAIN};
+    server_name ${DOMAIN};
 
     location / {
         proxy_pass http://dashboard:8501;

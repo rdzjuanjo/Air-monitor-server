@@ -103,14 +103,6 @@ services:
     networks:
       - backend
 
-  landing:
-    image: nginx:alpine
-    restart: unless-stopped
-    volumes:
-      - ./landing:/usr/share/nginx/html:ro
-    networks:
-      - backend
-
   nginx:
     image: nginx:alpine
     restart: unless-stopped
@@ -127,7 +119,6 @@ services:
       - certbot_www:/var/www/certbot
       - ota_files:/usr/share/nginx/ota:ro
     depends_on:
-      - landing
       - mosquitto
       - grafana
       - influxdb
