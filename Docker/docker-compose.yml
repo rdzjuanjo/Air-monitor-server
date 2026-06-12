@@ -41,6 +41,27 @@ services:
     networks:
       - backend
 
+  telegraf-system:
+    image: telegraf:1.35
+    restart: unless-stopped
+    environment:
+      INFLUX_ORG: ${INFLUX_ORG}
+      INFLUX_BUCKET_SYSTEM: ${INFLUX_BUCKET_SYSTEM}
+      INFLUX_TOKEN: ${INFLUX_TOKEN}
+      HOST_ETC: /hostfs/etc
+      HOST_PROC: /hostfs/proc
+      HOST_SYS: /hostfs/sys
+      HOST_VAR: /hostfs/var
+      HOST_RUN: /hostfs/run
+      HOST_MOUNT_PREFIX: /hostfs
+    volumes:
+      - ./telegraf/telegraf-system.conf:/etc/telegraf/telegraf.conf:ro
+      - /:/hostfs:ro
+    depends_on:
+      - influxdb
+    networks:
+      - backend
+
   grafana:
     image: grafana/grafana:latest
     restart: unless-stopped
@@ -50,6 +71,8 @@ services:
       INFLUX_ORG: ${INFLUX_ORG}
       INFLUX_BUCKET: ${INFLUX_BUCKET}
       INFLUX_TOKEN: ${INFLUX_TOKEN}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro

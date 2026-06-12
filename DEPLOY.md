@@ -49,6 +49,37 @@ Para evitar que un cambio sin probar llegue a produccion, se usan dos ramas:
    docker compose up -d --build
    ```
 
+## Monitoreo del servidor (CPU/RAM/disco)
+
+Se agrego el servicio `telegraf-system` que escribe metricas del host
+(CPU, RAM, disco, swap, red, load average) al bucket `sistema` en
+InfluxDB, visibles en el dashboard "Servidor" de Grafana, con alertas
+por Telegram.
+
+Pasos unicos al desplegar esto por primera vez en un entorno (Pi o VPS):
+
+1. **Crear el bucket `sistema` en InfluxDB** (el bucket inicial solo se
+   crea una vez al inicializar InfluxDB, asi que hay que crearlo a mano):
+   ```bash
+   docker compose exec influxdb influx bucket create \
+     --name sistema \
+     --org "$INFLUX_ORG" \
+     --token "$INFLUX_TOKEN"
+   ```
+
+2. **Crear un bot de Telegram para las alertas**:
+   - Habla con [@BotFather](https://t.me/BotFather) en Telegram, usa
+     `/newbot` y guarda el token que te da -> `TELEGRAM_BOT_TOKEN`.
+   - Envia cualquier mensaje a tu bot nuevo, luego visita
+     `https://api.telegram.org/bot<TOKEN>/getUpdates` y busca el campo
+     `chat.id` -> `TELEGRAM_CHAT_ID`.
+   - Agrega ambos valores al `.env` del entorno.
+
+3. **Levantar el nuevo servicio**:
+   ```bash
+   docker compose up -d --build
+   ```
+
 ## Notas
 
 - `Docker/.env` **no se versiona** (esta en `.gitignore`). Cada entorno
