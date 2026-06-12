@@ -1,0 +1,12 @@
+[Unit]
+Description=Publish *.local mDNS aliases for the dashboard (NGINX_PROFILE=lan only)
+After=avahi-daemon.service
+Requires=avahi-daemon.service
+
+[Service]
+ExecStart=/usr/local/bin/dash-mdns.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
