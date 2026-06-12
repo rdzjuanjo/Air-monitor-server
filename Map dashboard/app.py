@@ -89,11 +89,14 @@ show_markers = st.sidebar.checkbox(
 )
 if show_markers:
     marker_size = st.sidebar.slider(
-        "Radio del marcador (px)",
+        "Radio maximo del marcador (px)",
         min_value=4,
         max_value=60,
         value=16,
         step=1,
+        help="Tamaño del marcador cuando el valor alcanza el umbral alto. "
+        "El tamaño se escala segun el valor de cada estacion, normalizado "
+        "entre el minimo de los datos y el umbral alto.",
     )
     marker_opacity = st.sidebar.slider(
         "Opacidad del marcador",

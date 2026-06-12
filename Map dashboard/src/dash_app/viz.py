@@ -69,16 +69,22 @@ def build_animated_map(
 
     if show_markers:
         # Marcador solido coloreado con la misma escala/rango que el heatmap,
-        # que se mueve y cambia de color en cada frame de la animacion (igual
-        # que el heatmap), ya que se agrega tanto al estado inicial (fig.data)
-        # como a cada fig.frames[i] (frame.data + frame.traces).
+        # que se mueve, cambia de color y de tamaño en cada frame de la
+        # animacion (igual que el heatmap), ya que se agrega tanto al estado
+        # inicial (fig.data) como a cada fig.frames[i] (frame.data + traces).
+        size_min = 4.0
+        size_range = max(cmax - cmin, 1e-9)
+
         def _marker_trace(sub: pd.DataFrame) -> go.Scattermapbox:
+            normalized = ((sub["value"] - cmin) / size_range).clip(0.0, 1.0)
+            sizes = size_min + normalized * (float(marker_size) - size_min)
             return go.Scattermapbox(
                 lat=sub["lat"],
                 lon=sub["lon"],
                 mode="markers+text",
                 marker={
-                    "size": int(marker_size),
+                    "size": sizes,
+                    "sizemin": size_min,
                     "opacity": float(marker_opacity),
                     "color": sub["value"],
                     "colorscale": HEATMAP_COLORSCALE,
