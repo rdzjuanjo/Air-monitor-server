@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import streamlit as st
 
 from src.dash_app.config import SettingsError, load_settings
+from src.dash_app.geo_layers import load_dren_lines
 from src.dash_app.influx_client import default_window, query_measurements
 from src.dash_app.transform import aggregate_to_frames
 from src.dash_app.viz import build_animated_map
@@ -103,6 +104,16 @@ else:
     marker_size = 16
     marker_opacity = 1.0
 
+st.sidebar.subheader("Capa de dren")
+show_dren = st.sidebar.checkbox("Mostrar red de drenaje", value=True)
+dren_width = st.sidebar.slider(
+    "Grosor de linea del dren (px)",
+    min_value=0.5,
+    max_value=5.0,
+    value=1.5,
+    step=0.5,
+)
+
 if st.sidebar.button("Recargar datos", type="primary"):
     _fetch.clear()
 
@@ -149,6 +160,8 @@ frame_df, _meta = aggregate_to_frames(
 if raw_df.empty:
     st.warning("No hay datos para las ultimas 24 horas con los filtros actuales. Mostrando mapa vacio.")
 
+dren_lines = load_dren_lines() if show_dren else None
+
 fig = build_animated_map(
     frame_df,
     center_lat=float(map_center_lat),
@@ -160,6 +173,9 @@ fig = build_animated_map(
     show_markers=bool(show_markers),
     marker_size=int(marker_size),
     marker_opacity=float(marker_opacity),
+    dren_lines=dren_lines,
+    dren_width=float(dren_width),
+    dren_color="blue",
 )
 if fig is None:
     st.warning("No se pudo construir la animacion con los datos actuales.")

@@ -5,7 +5,29 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 
-def build_empty_map(center_lat: float, center_lon: float, zoom: float):
+def _add_dren_layer(fig: go.Figure, dren_lines: dict | None, dren_width: float, dren_color: str) -> None:
+    if not dren_lines or not dren_lines.get("lat"):
+        return
+    fig.add_trace(
+        go.Scattermapbox(
+            lat=dren_lines["lat"],
+            lon=dren_lines["lon"],
+            mode="lines",
+            line={"width": float(dren_width), "color": dren_color},
+            hoverinfo="skip",
+            name="Dren",
+        )
+    )
+
+
+def build_empty_map(
+    center_lat: float,
+    center_lon: float,
+    zoom: float,
+    dren_lines: dict | None = None,
+    dren_width: float = 1.5,
+    dren_color: str = "blue",
+):
     fig = go.Figure(go.Scattermapbox())
     fig.update_layout(
         mapbox_style="open-street-map",
@@ -15,6 +37,7 @@ def build_empty_map(center_lat: float, center_lon: float, zoom: float):
         height=650,
         uirevision="map-interaction",
     )
+    _add_dren_layer(fig, dren_lines, dren_width, dren_color)
     return fig
 
 
@@ -36,9 +59,19 @@ def build_animated_map(
     show_markers: bool = False,
     marker_size: int = 16,
     marker_opacity: float = 1.0,
+    dren_lines: dict | None = None,
+    dren_width: float = 1.5,
+    dren_color: str = "blue",
 ):
     if df.empty:
-        return build_empty_map(center_lat=center_lat, center_lon=center_lon, zoom=zoom)
+        return build_empty_map(
+            center_lat=center_lat,
+            center_lon=center_lon,
+            zoom=zoom,
+            dren_lines=dren_lines,
+            dren_width=dren_width,
+            dren_color=dren_color,
+        )
 
     cmin = float(df["value"].min())
     cmax = max(float(high_threshold), cmin + 1e-9)
@@ -126,5 +159,9 @@ def build_animated_map(
         first_label = fig.frames[0].name if fig.frames else None
         first_sub = groups.get(first_label, df.iloc[0:0])
         fig.add_trace(_marker_trace(first_sub))
+
+    # Capa estatica del dren, agregada al final y fuera de frame.traces para
+    # que permanezca fija durante toda la animacion.
+    _add_dren_layer(fig, dren_lines, dren_width, dren_color)
 
     return fig
