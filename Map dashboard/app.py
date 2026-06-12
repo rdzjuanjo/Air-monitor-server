@@ -166,6 +166,3 @@ if fig is None:
     st.stop()
 
 st.plotly_chart(fig, use_container_width=True)
-
-with st.expander("Muestra de datos agregados (20 min)"):
-    st.dataframe(frame_df.head(200), use_container_width=True)
