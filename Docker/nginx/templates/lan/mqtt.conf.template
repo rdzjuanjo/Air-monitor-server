@@ -1,21 +1,12 @@
-# MQTT sobre websockets - mqtt.sensio.mx
+# Configuracion local via mDNS - sin SSL, solo HTTP
+# MQTT sobre websockets - mqtt.${DOMAIN}
 # El MQTT plano (puerto 1883) para los ESP32 no pasa por nginx, se expone
 # directo en el host (ver docker-compose.yml, servicio mosquitto).
 
 server {
     listen 80;
     listen [::]:80;
-    server_name mqtt.sensio.mx;
-
-    include /etc/nginx/snippets/acme-redirect.conf;
-}
-
-server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    server_name mqtt.sensio.mx;
-
-    include /etc/nginx/snippets/ssl-sensio.conf;
+    server_name mqtt.${DOMAIN};
 
     location / {
         proxy_pass http://mosquitto:9001;

@@ -1,19 +1,10 @@
-# Panel de administracion de dispositivos - admin.sensio.mx
+# Configuracion local via mDNS - sin SSL, solo HTTP
+# Panel de administracion - admin.${DOMAIN}
 
 server {
     listen 80;
     listen [::]:80;
-    server_name admin.sensio.mx;
-
-    include /etc/nginx/snippets/acme-redirect.conf;
-}
-
-server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    server_name admin.sensio.mx;
-
-    include /etc/nginx/snippets/ssl-sensio.conf;
+    server_name admin.${DOMAIN};
 
     location / {
         proxy_pass http://admin-panel:5000;

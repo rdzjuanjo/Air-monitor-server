@@ -1,19 +1,10 @@
-# Landing page - sensio.mx / www.sensio.mx
+# Configuracion local via mDNS - sin SSL, solo HTTP
+# Landing page - ${DOMAIN}
 
 server {
     listen 80;
     listen [::]:80;
-    server_name sensio.mx www.sensio.mx;
-
-    include /etc/nginx/snippets/acme-redirect.conf;
-}
-
-server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    server_name sensio.mx www.sensio.mx;
-
-    include /etc/nginx/snippets/ssl-sensio.conf;
+    server_name ${DOMAIN};
 
     location / {
         proxy_pass http://landing:80;

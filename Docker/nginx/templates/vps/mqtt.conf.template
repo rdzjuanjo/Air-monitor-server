@@ -1,0 +1,32 @@
+# MQTT sobre websockets - mqtt.${DOMAIN}
+# El MQTT plano (puerto 1883) para los ESP32 no pasa por nginx, se expone
+# directo en el host (ver docker-compose.yml, servicio mosquitto).
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name mqtt.${DOMAIN};
+
+    include /etc/nginx/snippets/acme-redirect.conf;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name mqtt.${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    location / {
+        proxy_pass http://mosquitto:9001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 86400;
+    }
+}

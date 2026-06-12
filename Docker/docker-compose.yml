@@ -117,9 +117,11 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/templates/${NGINX_PROFILE}:/etc/nginx/templates:ro
       - ./nginx/snippets:/etc/nginx/snippets:ro
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
