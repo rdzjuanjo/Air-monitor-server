@@ -80,6 +80,29 @@ Pasos unicos al desplegar esto por primera vez en un entorno (Pi o VPS):
    docker compose up -d --build
    ```
 
+4. **Verificar el `uid` del datasource de InfluxDB en Grafana**:
+   `grafana/provisioning/datasources/influxdb.yml` fija un `uid` fijo
+   (`P951FEA4DE68E13C5`, el que ya tenia la Pi) para que el dashboard
+   "Servidor" y las reglas de alerta puedan referenciarlo. Si en este
+   entorno Grafana ya tenia el datasource "InfluxDB" provisionado con
+   OTRO uid, Grafana entrara en crash-loop al arrancar con un error como:
+   ```
+   Failed to provision data sources: Datasource provisioning error: data source not found
+   ```
+   Para arreglarlo, averigua el uid real que ya tiene ese entorno:
+   ```bash
+   docker run --rm -v docker_grafana_data:/data alpine sh -c \
+     "apk add -q sqlite >/dev/null 2>&1; sqlite3 /data/grafana.db \
+     'select uid,name,type from data_source;'"
+   ```
+   y reemplaza `P951FEA4DE68E13C5` por ese uid en:
+   - `grafana/provisioning/datasources/influxdb.yml`
+   - `grafana/provisioning/dashboards/servidor.json`
+   - `grafana/provisioning/alerting/rules.yaml`
+
+   Luego `docker compose restart grafana` (un `up -d` no basta si solo
+   cambio un archivo montado por bind mount).
+
 ## Notas
 
 - `Docker/.env` **no se versiona** (esta en `.gitignore`). Cada entorno
