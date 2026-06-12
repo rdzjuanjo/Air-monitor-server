@@ -21,7 +21,7 @@ groups:
             relativeTimeRange:
               from: 600
               to: 0
-            datasourceUid: influxdb
+            datasourceUid: P951FEA4DE68E13C5
             model:
               refId: A
               query: |
@@ -70,7 +70,7 @@ groups:
             relativeTimeRange:
               from: 600
               to: 0
-            datasourceUid: influxdb
+            datasourceUid: P951FEA4DE68E13C5
             model:
               refId: A
               query: |

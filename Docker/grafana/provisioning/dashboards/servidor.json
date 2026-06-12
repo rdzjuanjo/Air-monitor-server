@@ -11,7 +11,7 @@
       "id": 1,
       "title": "CPU (uso total)",
       "type": "timeseries",
-      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "fieldConfig": {
         "defaults": {
@@ -24,7 +24,7 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
           "query": "from(bucket: \"sistema\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu\")\n  |> filter(fn: (r) => r._field == \"usage_active\")\n  |> filter(fn: (r) => r.cpu == \"cpu-total\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"cpu\")"
         }
       ]
@@ -33,7 +33,7 @@
       "id": 2,
       "title": "Memoria RAM (uso)",
       "type": "timeseries",
-      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "fieldConfig": {
         "defaults": {
@@ -46,7 +46,7 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
           "query": "from(bucket: \"sistema\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mem\")\n  |> filter(fn: (r) => r._field == \"used_percent\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"ram\")"
         }
       ]
@@ -55,7 +55,7 @@
       "id": 3,
       "title": "Disco / (uso actual)",
       "type": "gauge",
-      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
       "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
       "fieldConfig": {
         "defaults": {
@@ -76,7 +76,7 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
           "query": "from(bucket: \"sistema\")\n  |> range(start: -10m)\n  |> filter(fn: (r) => r._measurement == \"disk\")\n  |> filter(fn: (r) => r._field == \"used_percent\")\n  |> filter(fn: (r) => r.path == \"/\")\n  |> last()\n  |> yield(name: \"disco\")"
         }
       ]
@@ -85,7 +85,7 @@
       "id": 4,
       "title": "Swap (uso)",
       "type": "timeseries",
-      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
       "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
       "fieldConfig": {
         "defaults": {
@@ -98,7 +98,7 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
           "query": "from(bucket: \"sistema\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"swap\")\n  |> filter(fn: (r) => r._field == \"used_percent\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"swap\")"
         }
       ]
@@ -107,7 +107,7 @@
       "id": 5,
       "title": "Load average",
       "type": "timeseries",
-      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
       "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
       "fieldConfig": {
         "defaults": {
@@ -118,7 +118,7 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
           "query": "from(bucket: \"sistema\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"system\")\n  |> filter(fn: (r) => r._field == \"load1\" or r._field == \"load5\" or r._field == \"load15\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"load\")"
         }
       ]
@@ -127,7 +127,7 @@
       "id": 6,
       "title": "Red (entrada/salida)",
       "type": "timeseries",
-      "datasource": { "type": "influxdb", "uid": "influxdb" },
+      "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
       "fieldConfig": {
         "defaults": {
@@ -138,7 +138,7 @@
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "influxdb", "uid": "influxdb" },
+          "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
           "query": "from(bucket: \"sistema\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"net\")\n  |> filter(fn: (r) => r._field == \"bytes_recv\" or r._field == \"bytes_sent\")\n  |> filter(fn: (r) => r.interface != \"lo\" and r.interface != \"docker0\" and not r.interface =~ /^veth/ and not r.interface =~ /^br-/)\n  |> derivative(unit: 1s, nonNegative: true)\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"red\")"
         }
       ]
