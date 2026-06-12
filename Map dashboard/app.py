@@ -54,7 +54,7 @@ selected_stations = tuple(
 map_zoom = st.sidebar.slider("Zoom inicial", min_value=1.0, max_value=15.0, value=DEFAULT_ZOOM, step=0.5)
 
 st.sidebar.subheader("Apariencia del heatmap")
-blur = st.sidebar.slider("Blur / radio del heatmap (px)", min_value=1, max_value=50, value=18, step=1)
+blur = st.sidebar.slider("Radio del punto / blur (px)", min_value=1, max_value=50, value=18, step=1)
 high_threshold = st.sidebar.slider(
     "Umbral alto (escala de color, rojo)",
     min_value=1.0,
