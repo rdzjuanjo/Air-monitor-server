@@ -45,7 +45,20 @@ def _load_ota_manifest(config):
     if os.path.exists(json_path):
         with open(json_path) as f:
             return json.load(f)
-    return {"version": "1.0.0", "url": _ota_bin_url(config), "md5": ""}
+    return {"Configurations": [{"Version": "1.0.0", "URL": _ota_bin_url(config), "MD5": ""}]}
+
+
+def _manifest_summary(manifest):
+    """Extrae version/url/md5 de la primera configuracion para mostrar en la UI."""
+    configurations = manifest.get("Configurations") or []
+    if configurations:
+        first = configurations[0]
+        return {
+            "version": first.get("Version", "-"),
+            "url": first.get("URL", "-"),
+            "md5": first.get("MD5", ""),
+        }
+    return {"version": "-", "url": "-", "md5": ""}
 
 
 @bp.route("/login", methods=["GET", "POST"])
@@ -201,7 +214,7 @@ def rename_device(device_id: str):
 @bp.route("/ota", methods=["GET"])
 @login_required
 def ota():
-    manifest = _load_ota_manifest(current_app.config)
+    manifest = _manifest_summary(_load_ota_manifest(current_app.config))
     _, bin_path = _ota_paths(current_app.config)
     has_firmware = os.path.exists(bin_path)
     return render_template("ota.html", manifest=manifest, has_firmware=has_firmware)
@@ -235,10 +248,16 @@ def update_ota():
         for chunk in iter(lambda: f.read(8192), b""):
             md5.update(chunk)
 
+    # Formato esperado por ESP32OTAPull: lista de "Configurations".
+    # Board/Device/Config vacios => coincide con cualquier dispositivo.
     manifest = {
-        "version": version,
-        "url": _ota_bin_url(current_app.config),
-        "md5": md5.hexdigest(),
+        "Configurations": [
+            {
+                "Version": version,
+                "URL": _ota_bin_url(current_app.config),
+                "MD5": md5.hexdigest(),
+            }
+        ]
     }
     with open(json_path, "w") as f:
         json.dump(manifest, f, indent=2)
