@@ -20,7 +20,7 @@ from flask_login import login_required, login_user, logout_user
 from .auth import User, verify_password
 from .hidden_devices import hide_device, load_hidden_devices
 from .influx_client import get_device_history, get_recent_devices
-from .mqtt_client import publish_remote_action
+from .mqtt_client import publish_remote_action, publish_remote_action_and_wait
 
 bp = Blueprint("main", __name__)
 
@@ -137,6 +137,38 @@ def set_coordinates(device_id: str):
         params={"lat": lat, "lon": lon},
     )
     flash(f"Comando de coordenadas enviado a {device_id}.", "success")
+    return redirect(url_for("main.index"))
+
+
+@bp.route("/devices/<device_id>/check_ota", methods=["POST"])
+@login_required
+def check_ota(device_id: str):
+    publish_remote_action(
+        current_app.config,
+        device_id,
+        action="check_ota",
+    )
+    flash(f"Comando de verificacion OTA enviado a {device_id}.", "success")
+    return redirect(url_for("main.index"))
+
+
+@bp.route("/devices/<device_id>/status", methods=["POST"])
+@login_required
+def check_status(device_id: str):
+    response = publish_remote_action_and_wait(
+        current_app.config,
+        device_id,
+        action="get_status",
+        timeout=5.0,
+    )
+
+    if response is None:
+        flash(f"{device_id} no respondio (puede estar reiniciando u offline).", "error")
+    elif response.get("ok"):
+        flash(f"{device_id} -> {response.get('detail', '')}", "success")
+    else:
+        flash(f"{device_id} -> {response.get('status')}: {response.get('detail', '')}", "error")
+
     return redirect(url_for("main.index"))
 
 

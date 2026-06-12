@@ -4,9 +4,11 @@
 
 #include <Arduino.h>
 #include <ESP32OTAPull.h>
+#include <esp_system.h>
 #include <cstring>
 
 #include "system_status.h"
+#include "NvsConfig.h"
 #include "config.h"
 
 /**
@@ -52,8 +54,6 @@ struct OtaConfig {
 
 extern bool wifi_connected;
 
-static unsigned long lastOtaCheckMs = 0;
-
 inline const char *getFirmwareVersion() {
   return CFG_FIRMWARE_VERSION;
 }
@@ -84,10 +84,12 @@ inline const char *getFirmwareVersion() {
 // ============================================================================
 
 const char* errtext(int code);
+const char* resetReasonName(esp_reset_reason_t reason);
+int checkOTAUpdateEx(const OtaConfig &config);
 void checkOTAUpdate(const OtaConfig &config);
 void checkOTAUpdate();
-void setupOTA();
-void loopOTA();
+void registerOtaRemoteAction();
+void registerStatusRemoteAction();
 
 // ============================================================================
 // IMPLEMENTACIÓN
@@ -250,12 +252,12 @@ const char* errtext(int code) {
  * Reiniciando...
  * [ESP32 se reinicia con nueva versión]
  */
-void checkOTAUpdate(const OtaConfig &config) {
+int checkOTAUpdateEx(const OtaConfig &config) {
   Serial.println("\n▶ Verificando actualizaciones OTA...");
-  
+
   ESP32OTAPull ota;
   int ret = ota.CheckForOTAUpdate(config.json_url, config.version);
-  
+
   Serial.printf("  Resultado: %s\n", errtext(ret));
 
   if (ret == ESP32OTAPull::UPDATE_OK) {
@@ -275,6 +277,12 @@ void checkOTAUpdate(const OtaConfig &config) {
     snprintf(msg, sizeof(msg), "OTA error %d: %s", ret, errtext(ret));
     sysStatusAddEvent(SysSeverity::error, "ota", msg);
   }
+
+  return ret;
+}
+
+void checkOTAUpdate(const OtaConfig &config) {
+  checkOTAUpdateEx(config);
 }
 
 void checkOTAUpdate() {
@@ -282,20 +290,63 @@ void checkOTAUpdate() {
   checkOTAUpdate(config);
 }
 
-void setupOTA() {
-  lastOtaCheckMs = 0;
+/**
+ * @brief Registra la acción remota MQTT "check_ota".
+ *
+ * Permite forzar desde el panel de administración la rutina de
+ * verificación OTA. Si hay una versión nueva disponible, el ESP32
+ * la descarga e instala y se reinicia automáticamente (no se llega
+ * a enviar respuesta MQTT en ese caso). Si no hay actualización o
+ * falla la verificación, se responde con el detalle del resultado.
+ */
+void registerOtaRemoteAction() {
+  mqttHandlerRegisterAction("check_ota",
+    [](const JsonDocument& /*doc*/, const char* /*topic*/, String& detail) -> bool {
+      const OtaConfig config = {CFG_OTA_JSON_URL, CFG_FIRMWARE_VERSION, CFG_OTA_CHECK_INTERVAL_MS};
+      const int ret = checkOTAUpdateEx(config);
+      detail = errtext(ret);
+      return ret == ESP32OTAPull::UPDATE_OK ||
+             ret == ESP32OTAPull::NO_UPDATE_AVAILABLE ||
+             ret == ESP32OTAPull::NO_UPDATE_PROFILE_FOUND;
+    });
 }
 
-void loopOTA() {
-  if (!wifi_connected) {
-    return;
+/**
+ * @brief Traduce el motivo de reinicio del ESP32 a un texto corto.
+ */
+const char* resetReasonName(esp_reset_reason_t reason) {
+  switch (reason) {
+    case ESP_RST_POWERON:   return "poweron";
+    case ESP_RST_SW:        return "sw";
+    case ESP_RST_PANIC:     return "panic";
+    case ESP_RST_INT_WDT:   return "int_wdt";
+    case ESP_RST_TASK_WDT:  return "task_wdt";
+    case ESP_RST_WDT:       return "wdt";
+    case ESP_RST_DEEPSLEEP: return "deepsleep";
+    case ESP_RST_BROWNOUT:  return "brownout";
+    case ESP_RST_SDIO:      return "sdio";
+    default:                return "unknown";
   }
+}
 
-  const unsigned long now = millis();
-  if (lastOtaCheckMs == 0 || now - lastOtaCheckMs >= CFG_OTA_CHECK_INTERVAL_MS) {
-    lastOtaCheckMs = now;
-    checkOTAUpdate();
-  }
+/**
+ * @brief Registra la acción remota MQTT "get_status".
+ *
+ * Responde de inmediato (sin tocar el topic de telemetría) con la
+ * versión de firmware, el tiempo desde el último arranque y el
+ * motivo del último reinicio. Util para verificar tras un check_ota
+ * si el dispositivo arrancó con la nueva versión, sin esperar al
+ * siguiente envío periódico de datos.
+ */
+void registerStatusRemoteAction() {
+  mqttHandlerRegisterAction("get_status",
+    [](const JsonDocument& /*doc*/, const char* /*topic*/, String& detail) -> bool {
+      detail = String("fw=") + getFirmwareVersion() +
+               ";uptime_ms=" + String(millis()) +
+               ";boot=" + resetReasonName(esp_reset_reason()) +
+               ";id=" + nvsGetDeviceId();
+      return true;
+    });
 }
 
 #endif

@@ -54,19 +54,17 @@ inline void libSetup(SensorSetupFn sensorInit) {
   Serial.println("\n▶ Iniciando WiFi…");
   wifiSetup();
 
-  // 5. Acciones remotas MQTT genéricas (coordenadas, deviceId)
+  // 5. Acciones remotas MQTT genéricas (coordenadas, deviceId, check_ota, get_status)
   registerBuiltinRemoteActions();
+  registerOtaRemoteAction();
+  registerStatusRemoteAction();
 
   // 6. MQTT (se conectará cuando haya STA)
   Serial.println("\n▶ Configurando MQTT…");
   setupMQTT();
 
-  // 7. OTA
-  setupOTA();
-  if (wifi_connected) {
-    Serial.println("\n▶ Verificando OTA…");
-    checkOTAUpdate();
-  }
+  // 7. OTA: solo se ejecuta por comando remoto "check_ota" (ver registerOtaRemoteAction)
+  //    para evitar que una actualización defectuosa afecte todas las estaciones a la vez.
 
   // 8. Timers de sistema
   lastWifiConnectedTime = millis();
@@ -97,7 +95,6 @@ inline void libLoop() {
   }
 
   wifiLoop();
-  loopOTA();
 
   if (wifi_connected) {
     loopMQTT();

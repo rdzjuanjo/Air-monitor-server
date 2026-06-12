@@ -27,6 +27,12 @@
         <input type="text" name="new_device_id" value="{{ d.device_id }}" maxlength="31" required>
         <button type="submit" title="Cambiar ID del dispositivo">Renombrar</button>
       </form>
+      <form class="inline" method="post" action="{{ url_for('main.check_ota', device_id=d.device_id) }}">
+        <button type="submit" title="Verificar y aplicar actualizacion de firmware OTA">Buscar actualizacion</button>
+      </form>
+      <form class="inline" method="post" action="{{ url_for('main.check_status', device_id=d.device_id) }}">
+        <button type="submit" title="Solicitar version de firmware y tiempo de actividad actuales">Verificar estado</button>
+      </form>
       {% if not d.online %}
       <form class="inline" method="post" action="{{ url_for('main.hide', device_id=d.device_id) }}"
             onsubmit="return confirm('Ocultar {{ d.device_id }} del panel?');">
