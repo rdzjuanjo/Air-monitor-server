@@ -7,7 +7,7 @@ Referencia de todos los mensajes MQTT de entrada y salida del firmware.
 El dispositivo publica y escucha **en el mismo topic**:
 
 ```
-riosvivos/monitoring/{device_id}
+monitoreo/{device_id}
 ```
 
 `device_id` se configura en el webserver (sección Avanzados) y se persiste en NVS. El dispositivo se suscribe a este topic al conectarse al broker.

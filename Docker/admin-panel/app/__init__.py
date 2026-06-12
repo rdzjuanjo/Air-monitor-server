@@ -16,7 +16,7 @@ def create_app() -> Flask:
     app.config["INFLUX_BUCKET"] = os.environ["INFLUX_BUCKET"]
     app.config["MQTT_HOST"] = os.environ.get("MQTT_HOST", "mosquitto")
     app.config["MQTT_PORT"] = int(os.environ.get("MQTT_PORT", "1883"))
-    app.config["MQTT_TOPIC_BASE"] = os.environ.get("MQTT_TOPIC_BASE", "riosvivos/monitoring")
+    app.config["MQTT_TOPIC_BASE"] = os.environ.get("MQTT_TOPIC_BASE", "monitoreo/")
     app.config["USERS_FILE"] = os.environ.get("USERS_FILE", "/app/users.yaml")
     app.config["OTA_DIR"] = os.environ.get("OTA_DIR", "/app/ota")
     app.config["OTA_BASE_URL"] = os.environ.get("OTA_BASE_URL", "https://ota.sensio.mx")

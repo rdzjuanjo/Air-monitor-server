@@ -90,7 +90,7 @@ services:
       INFLUX_BUCKET: ${INFLUX_BUCKET}
       MQTT_HOST: mosquitto
       MQTT_PORT: "1883"
-      MQTT_TOPIC_BASE: riosvivos/monitoring
+      MQTT_TOPIC_BASE: monitoreo
       SECRET_KEY: ${ADMIN_SECRET_KEY}
       OTA_DIR: /app/ota
       OTA_BASE_URL: ${OTA_BASE_URL}

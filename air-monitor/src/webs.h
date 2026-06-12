@@ -85,6 +85,7 @@ const char *getLastMqttInboundCommand();
 unsigned long getLastMqttInboundAtMs();
 int getLastMqttReconnectState();
 unsigned long getLastMqttReconnectAtMs();
+void   sendMQTTData();
 void   wifiStartSTAConnect();
 
 // ============================================================================
@@ -257,6 +258,14 @@ footer b{color:#adb5bd}
 <script>
 (function(){
   let chart=null;
+  const STEP_MIN=20;     // minutos entre muestras del historial
+  const HISTORY_SIZE=72; // ventana total = HISTORY_SIZE * STEP_MIN (24 h)
+  function stepLabel(v,abs){
+    if(v===0)return abs?'0min':'ahora';
+    const m=Math.round(Math.abs(v)*STEP_MIN);
+    const txt=m<60?m+'min':(Math.round(m/60*10)/10)+'h';
+    return abs?txt:'-'+txt;
+  }
   if(typeof Chart!=='undefined'){
     try{
       const ctx=document.getElementById('chart').getContext('2d');
@@ -264,11 +273,12 @@ footer b{color:#adb5bd}
         borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.1)',fill:true,tension:.4,
         pointRadius:3,pointHoverRadius:6}]},options:{responsive:true,maintainAspectRatio:false,
         scales:{x:{
+          type:'linear',min:-(HISTORY_SIZE-1),max:0,
           grid:{color:'#21262d'},ticks:{color:'#7d8590',maxTicksLimit:8,
-            callback:v=>'#'+v}},
+            callback:v=>stepLabel(v)}},
           y:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#7d8590',callback:v=>v+' ppm'}}},
         plugins:{legend:{display:false},
-          tooltip:{callbacks:{title:i=>'Muestra #'+i[0].parsed.x,label:c=>c.parsed.y.toFixed(2)+' ppm'}}}}});
+          tooltip:{callbacks:{title:i=>{const v=i[0].parsed.x;return v===0?'Ahora':'Hace '+stepLabel(-v,true);},label:c=>c.parsed.y.toFixed(2)+' ppm'}}}}});
     }catch(_){}
   }
 
@@ -292,7 +302,8 @@ footer b{color:#adb5bd}
 
   function loadHistory(d){
     if(!chart||!d.samples||!d.values)return;
-    chart.data.datasets[0].data=d.samples.map((s,i)=>({x:s,y:d.values[i]}));
+    const last=d.samples.length?d.samples[d.samples.length-1]:0;
+    chart.data.datasets[0].data=d.samples.map((s,i)=>({x:s-last,y:d.values[i]}));
     chart.update();
   }
 
@@ -345,7 +356,7 @@ button:hover{opacity:.85}
 button:disabled{opacity:.35;cursor:default}
 .btn-sec{background:#21262d;color:#e6edf3;border:1px solid #30363d}
 .btn-sec:hover{opacity:.85}
-.msg{margin-top:10px;padding:10px 13px;border-radius:8px;font-size:.84rem;display:none}
+.msg{margin-top:10px;padding:10px 13px;border-radius:8px;font-size:.84rem;display:none;white-space:pre-wrap;word-break:break-word}
 .msg.ok{background:#1a3a1a;color:#3fb950;border:1px solid #3fb950;display:block}
 .msg.err{background:#2d1a1a;color:#f85149;border:1px solid #f85149;display:block}
 #map{border:1px solid #30363d;border-radius:8px;margin:10px 0}
@@ -537,7 +548,7 @@ input:focus{border-color:#58a6ff}
 button{margin-top:18px;width:100%;padding:11px;background:#58a6ff;color:#0d1117;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;transition:opacity .2s}
 button:hover{opacity:.85}
 button:disabled{opacity:.35;cursor:default}
-.msg{margin-top:10px;padding:10px 13px;border-radius:8px;font-size:.84rem;display:none}
+.msg{margin-top:10px;padding:10px 13px;border-radius:8px;font-size:.84rem;display:none;white-space:pre-wrap;word-break:break-word}
 .msg.ok{background:#1a3a1a;color:#3fb950;border:1px solid #3fb950;display:block}
 .msg.err{background:#2d1a1a;color:#f85149;border:1px solid #f85149;display:block}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -595,6 +606,8 @@ button:disabled{opacity:.35;cursor:default}
       <span>Calibración: <b id="calState">--</b></span>
     </div>
     <div class="diag" id="mqttDiag">Cargando diagnóstico…</div>
+    <button id="btnMqttTest" onclick="enviarMqttTest()">Enviar payload MQTT de prueba</button>
+    <div class="msg" id="msgMqttTest"></div>
   </div>
 </main>
 <script>
@@ -635,6 +648,17 @@ function calibrar(){
     btn.disabled=false;btn.textContent='Calibrar ahora (20 lecturas)';
   }).catch(()=>{msg.className='msg err';msg.textContent='✗ Sin respuesta';
     btn.disabled=false;btn.textContent='Calibrar ahora (20 lecturas)';});
+}
+
+function enviarMqttTest(){
+  const btn=document.getElementById('btnMqttTest'),msg=document.getElementById('msgMqttTest');
+  btn.disabled=true;btn.textContent='Enviando…';msg.className='msg';
+  fetch('/api/send_mqtt').then(r=>r.json()).then(d=>{
+    if(d.ok){msg.className='msg ok';msg.textContent=`✓ Enviado a ${d.topic}\n${d.payload}`;}
+    else{msg.className='msg err';msg.textContent='✗ '+(d.error||'Falló el publish');}
+    btn.disabled=false;btn.textContent='Enviar payload MQTT de prueba';
+  }).catch(()=>{msg.className='msg err';msg.textContent='✗ Sin respuesta';
+    btn.disabled=false;btn.textContent='Enviar payload MQTT de prueba';});
 }
 
 function guardar(){
@@ -834,6 +858,20 @@ void setupWeb() {
     req->send(200, "application/json",
               "{\"ok\":true,\"adc0\":" + String(adc0,0) + "}");
     Serial.printf("Calibración via web OK – ADC0=%.0f\n", adc0);
+  });
+
+  server.on("/api/send_mqtt", HTTP_GET, [](AsyncWebServerRequest* req){
+    if (!isMQTTConnected()) {
+      req->send(503, "application/json", "{\"ok\":false,\"error\":\"MQTT no conectado\"}");
+      return;
+    }
+    sendMQTTData();
+    DynamicJsonDocument doc(1024);
+    doc["ok"]      = getLastMqttPublishSuccess();
+    doc["topic"]   = getLastMqttPublishTopic();
+    doc["payload"] = getLastMqttPublishPayload();
+    String out; serializeJson(doc, out);
+    req->send(200, "application/json", out);
   });
 
   // ── Catch-all → portal cautivo ────────────────────────────────────────────

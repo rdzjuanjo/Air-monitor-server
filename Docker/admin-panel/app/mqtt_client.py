@@ -17,7 +17,7 @@ def publish_remote_action(config, device_id: str, action: str, params: dict | No
     if params is not None:
         payload["params"] = params
 
-    topic = f'{config["MQTT_TOPIC_BASE"]}/{device_id}'
+    topic = f'{config["MQTT_TOPIC_BASE"].rstrip("/")}/{device_id}'
 
     mqtt_publish.single(
         topic,
