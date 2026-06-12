@@ -98,6 +98,7 @@ def build_animated_map(
         mapbox={"center": {"lat": float(center_lat), "lon": float(center_lon)}, "zoom": float(zoom)},
         margin={"r": 0, "t": 80, "l": 0, "b": 0},
         uirevision="map-interaction",
+        coloraxis_showscale=False,
     )
 
     # Mueve los controles de animacion (play/pause y linea de tiempo) arriba
