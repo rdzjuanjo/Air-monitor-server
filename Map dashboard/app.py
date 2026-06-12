@@ -27,7 +27,7 @@ DEFAULT_CENTER_LON = -103.2537
 DEFAULT_ZOOM = 11.5
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=300)
 def _fetch(settings_dict: dict, selected_stations: tuple[str, ...]):
     settings = load_settings()
     window = default_window(settings.window_hours)
