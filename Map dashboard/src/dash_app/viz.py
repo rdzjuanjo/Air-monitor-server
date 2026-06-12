@@ -61,4 +61,23 @@ def build_animated_map(
         uirevision="map-interaction",
     )
 
+    # Marcador solido con la ultima posicion de cada estacion. El heatmap
+    # (density_mapbox) dibuja un degradado que se desvanece hacia los bordes,
+    # por lo que con valores bajos de "value" puede verse muy tenue; este
+    # marcador siempre es visible independientemente del radio/opacidad/umbral
+    # del heatmap. No es parte de los frames animados, asi que permanece fijo.
+    latest = df.sort_values("time_bucket").groupby("station_id", as_index=False).tail(1)
+    fig.add_trace(
+        go.Scattermapbox(
+            lat=latest["lat"],
+            lon=latest["lon"],
+            mode="markers+text",
+            marker={"size": 14, "color": "#2563eb"},
+            text=latest["station_id"],
+            textposition="top right",
+            hoverinfo="text",
+            name="Estaciones (ultima posicion)",
+        )
+    )
+
     return fig
