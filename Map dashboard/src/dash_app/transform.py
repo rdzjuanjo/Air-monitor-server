@@ -56,28 +56,3 @@ def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, now_utc: datetime) 
         grouped.reset_index(drop=True),
         TransformMeta(frame_count=int(frame_count), station_count=int(station_count), coverage_mean=float(coverage_mean)),
     )
-
-
-def validate_station_coordinates_consistency(df: pd.DataFrame, tolerance_deg: float = 0.003) -> pd.DataFrame:
-    # El ESP32 aplica jitter GPS de hasta ±0.001° por eje (privacidad), lo que
-    # produce un span normal de hasta ~0.002°. El umbral debe quedar por
-    # encima de eso para no marcar el jitter como un cambio real de ubicacion.
-    if df.empty:
-        return pd.DataFrame(columns=["station_id", "lat_span", "lon_span", "samples"])
-
-    spans = (
-        df.groupby("station_id", as_index=False)
-        .agg(
-            lat_min=("lat", "min"),
-            lat_max=("lat", "max"),
-            lon_min=("lon", "min"),
-            lon_max=("lon", "max"),
-            samples=("station_id", "count"),
-        )
-    )
-    spans["lat_span"] = spans["lat_max"] - spans["lat_min"]
-    spans["lon_span"] = spans["lon_max"] - spans["lon_min"]
-
-    issues = spans[(spans["lat_span"] > tolerance_deg) | (spans["lon_span"] > tolerance_deg)].copy()
-
-    return issues[["station_id", "lat_span", "lon_span", "samples"]].sort_values("samples", ascending=False)

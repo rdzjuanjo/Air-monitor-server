@@ -6,7 +6,7 @@ import streamlit as st
 
 from src.dash_app.config import SettingsError, load_settings
 from src.dash_app.influx_client import default_window, query_measurements
-from src.dash_app.transform import aggregate_to_frames, validate_station_coordinates_consistency
+from src.dash_app.transform import aggregate_to_frames
 from src.dash_app.viz import build_animated_map
 
 
@@ -110,8 +110,6 @@ map_center_lon = st.sidebar.number_input(
     key="map_center_lon",
 )
 
-issues = validate_station_coordinates_consistency(raw_df)
-
 frame_df, meta = aggregate_to_frames(
     raw_df,
     step_minutes=settings.step_minutes,
@@ -126,10 +124,6 @@ col4.metric("Cobertura media", f"{meta.coverage_mean:.1f}%")
 
 if raw_df.empty:
     st.warning("No hay datos para las ultimas 24 horas con los filtros actuales. Mostrando mapa vacio.")
-
-if not issues.empty:
-    st.warning("Se detectaron estaciones con lat/lon inconsistentes en el periodo.")
-    st.dataframe(issues, use_container_width=True)
 
 st.caption("El mapa usa OpenStreetMap. Puedes arrastrar, hacer zoom y moverte libremente.")
 st.caption("Escala de color: verde (bajo) -> amarillo (medio) -> rojo (alto).")
