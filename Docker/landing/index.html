@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sensio — Hardware inteligente para industria, ambiente y biotech</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #0F6E56;
+    --green-mid: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-border: #9FE1CB;
+    --blue-light: #E6F1FB;
+    --amber-light: #FAEEDA;
+    --bg: #F8F7F4;
+    --surface: #FFFFFF;
+    --text: #1A1A18;
+    --text-mid: #4A4A47;
+    --text-muted: #8A8A87;
+    --border: #E2E0DA;
+    --border-mid: #C8C6BF;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(248,247,244,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 5%;
+  }
+  .nav-inner {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .hamburger span {
+    display: block;
+    width: 22px;
+    height: 1.5px;
+    background: var(--text);
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: 56px; left: 0; right: 0;
+    background: rgba(248,247,244,0.98);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 5%;
+    z-index: 99;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a {
+    font-size: 15px;
+    color: var(--text-mid);
+    text-decoration: none;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-menu a:last-child { border-bottom: none; }
+  .mobile-menu .nav-cta {
+    margin-top: 8px;
+    text-align: center;
+    color: #fff !important;
+    border-radius: 7px;
+    padding: 11px;
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+  .logo-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green-mid);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 13.5px;
+    color: var(--text-mid);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--green);
+    color: #fff !important;
+    padding: 7px 18px;
+    border-radius: 6px;
+    font-size: 13.5px !important;
+    font-weight: 500;
+    transition: background 0.15s !important;
+  }
+  .nav-cta:hover { background: #0a5140 !important; }
+
+  /* ─── WRAPPER ─── */
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 5%;
+  }
+
+  /* ─── HERO ─── */
+  #hero {
+    padding: 140px 5% 80px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--green);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hero-eyebrow::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 1px;
+    background: var(--green-mid);
+  }
+  h1 {
+    font-size: clamp(32px, 5vw, 54px);
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 20px;
+    max-width: 700px;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--green);
+  }
+  .hero-sub {
+    font-size: 17px;
+    color: var(--text-mid);
+    line-height: 1.65;
+    max-width: 480px;
+    margin-bottom: 36px;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 56px;
+  }
+  .btn-primary {
+    background: var(--green);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 7px;
+    font-size: 14.5px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary:hover { background: #0a5140; }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 7px;
+    font-size: 14.5px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--border-mid);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .btn-secondary:hover { border-color: var(--text-muted); background: var(--bg); }
+
+  /* Live data bar — firma visual */
+  .live-bar {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    overflow: hidden;
+  }
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--green);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green-mid);
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+  .live-readings {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .reading {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .reading-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .reading-val {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .reading-val.green { color: var(--green); }
+
+  /* ─── SECTION BASE ─── */
+  section { padding: 80px 5%; }
+  section:nth-child(even) { background: var(--surface); }
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-eyebrow::before {
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 1px;
+    background: var(--border-mid);
+  }
+  h2 {
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+  .section-sub {
+    font-size: 15.5px;
+    color: var(--text-mid);
+    line-height: 1.65;
+    max-width: 520px;
+    margin-bottom: 44px;
+  }
+
+  /* ─── SECTORES ─── */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .pillar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+  .pillar:hover {
+    border-color: var(--green-border);
+    transform: translateY(-2px);
+  }
+  .pillar-icon {
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    font-size: 20px;
+  }
+  .icon-bio { background: var(--green-light); }
+  .icon-amb { background: var(--blue-light); }
+  .icon-ind { background: var(--amber-light); }
+  .pillar h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .pillar p {
+    font-size: 13.5px;
+    color: var(--text-mid);
+    line-height: 1.6;
+  }
+
+  /* ─── PROYECTOS ─── */
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .project-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.2s;
+  }
+  .project-card:hover { border-color: var(--border-mid); }
+  .project-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+    width: fit-content;
+    letter-spacing: 0.04em;
+  }
+  .tag-bio { background: var(--green-light); color: #0F6E56; }
+  .tag-amb { background: var(--blue-light); color: #185FA5; }
+  .tag-ind { background: var(--amber-light); color: #854F0B; }
+  .tag-wip { background: var(--border); color: var(--text-muted); }
+  .project-card h3 {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+  }
+  .project-card p {
+    font-size: 13px;
+    color: var(--text-mid);
+    line-height: 1.55;
+    flex: 1;
+  }
+  .project-links {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .project-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+  }
+  .project-links a:hover { color: var(--green); }
+
+  /* ─── SERVICIOS ─── */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .service-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+  }
+  .service-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    letter-spacing: 0.06em;
+  }
+  .service-card h3 {
+    font-size: 16.5px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+  .service-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .service-list li {
+    font-size: 13.5px;
+    color: var(--text-mid);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.45;
+  }
+  .service-list li::before {
+    content: "→";
+    color: var(--green-mid);
+    font-size: 12px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ─── PROCESO ─── */
+  .process-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .process-grid::before {
+    content: "";
+    position: absolute;
+    top: 28px;
+    left: calc(12.5% + 4px);
+    right: calc(12.5% + 4px);
+    height: 1px;
+    background: var(--border);
+    z-index: 0;
+  }
+  .step {
+    padding: 0 20px 0 0;
+    position: relative;
+    z-index: 1;
+  }
+  .step-circle {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1.5px solid var(--green-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--green);
+  }
+  .step h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .step p {
+    font-size: 13px;
+    color: var(--text-mid);
+    line-height: 1.55;
+  }
+
+  /* ─── CONTACTO ─── */
+  #contacto { background: var(--surface); }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 48px;
+    align-items: start;
+  }
+  .contact-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 8px;
+  }
+  .contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .contact-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: var(--green-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .contact-item-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 2px;
+  }
+  .contact-item-val {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .contact-form {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-mid);
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 13px;
+    font-size: 14px;
+    font-family: var(--sans);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--green-mid);
+    box-shadow: 0 0 0 3px rgba(29,158,117,0.08);
+  }
+  .field textarea { height: 90px; resize: vertical; }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238A8A87' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--text);
+    padding: 32px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-logo {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .footer-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green-mid);
+  }
+  .footer-copy {
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.4);
+    font-family: var(--mono);
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 860px) {
+    nav { padding: 0 4%; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    #hero { padding: 100px 4% 56px; }
+    h1 { font-size: 28px; }
+    .hero-sub { font-size: 15px; }
+    section { padding: 56px 4%; }
+    .pillars { grid-template-columns: 1fr; gap: 12px; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .services-grid { grid-template-columns: 1fr; }
+    .process-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+    .process-grid::before { display: none; }
+    .contact-grid { grid-template-columns: 1fr; }
+    footer { padding: 28px 4%; flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
+  @media (max-width: 540px) {
+    h1 { font-size: 24px; }
+    .hero-actions { flex-direction: column; }
+    .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+    .process-grid { grid-template-columns: 1fr; }
+    h2 { font-size: 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .logo-dot, .live-dot { animation: none; }
+    .pillar, .project-card { transition: none; }
+  }
+
+  /* ─── CARRUSEL DE PRODUCTOS ─── */
+  .carousel-wrap {
+    position: relative;
+  }
+  .carousel-track-outer {
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+  }
+  .carousel-track {
+    display: flex;
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .product-card {
+    background: var(--surface);
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    flex-shrink: 0;
+    min-height: 320px;
+  }
+  .product-img {
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 280px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+  .product-body {
+    padding: 36px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+  .product-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .product-card h3 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .product-card p {
+    font-size: 14px;
+    color: var(--text-mid);
+    line-height: 1.65;
+    flex: 1;
+  }
+  .product-specs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .spec-tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 9px;
+    color: var(--text-mid);
+  }
+  .product-cta {
+    margin-top: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--green);
+    text-decoration: none;
+    border: 1px solid var(--green-border);
+    border-radius: 6px;
+    padding: 8px 16px;
+    width: fit-content;
+    transition: background 0.15s;
+  }
+  .product-cta:hover { background: var(--green-light); }
+
+  /* Flechas laterales — absolutas sobre la tarjeta */
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-mid);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    font-size: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .carousel-btn:hover { border-color: var(--green-border); background: var(--green-light); color: var(--green); }
+  #prevBtn { left: -20px; }
+  #nextBtn { right: -20px; }
+
+  /* Dots debajo */
+  .carousel-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .carousel-dots { display: flex; gap: 7px; align-items: center; }
+  .carousel-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border-mid);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    border: none;
+    padding: 0;
+  }
+  .carousel-dot.active { background: var(--green); transform: scale(1.4); }
+
+  @media (max-width: 768px) {
+    .product-card { flex-direction: column; min-height: unset; }
+    .product-img { width: 100%; min-height: 180px; border-right: none; border-bottom: 1px solid var(--border); }
+    .product-body { padding: 22px 20px; }
+    .product-card h3 { font-size: 18px; }
+    #prevBtn { left: -14px; }
+    #nextBtn { right: -14px; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="logo"><div class="logo-dot"></div>sensio</a>
+    <ul class="nav-links">
+      <li><a href="#productos">Productos</a></li>
+      <li><a href="#proyectos">Proyectos</a></li>
+      <li><a href="#productos">Productos</a></li>
+      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#proceso">Proceso</a></li>
+      <li><a href="#contacto" class="nav-cta">Contactar →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#productos" onclick="closeMobile()">Productos</a>
+  <a href="#proyectos" onclick="closeMobile()">Proyectos</a>
+  <a href="#servicios" onclick="closeMobile()">Servicios</a>
+  <a href="#proceso" onclick="closeMobile()">Proceso</a>
+  <a href="#contacto" class="nav-cta" onclick="closeMobile()">Contactar →</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">IoT · Hardware · Sistemas embebidos</div>
+    <h1>Hardware inteligente para <em>industria, ambiente y biotech</em></h1>
+    <p class="hero-sub">Diseñamos y fabricamos sensores, plataformas IoT y sistemas embebidos a medida. Desde prototipo hasta producto final.</p>
+    <div class="hero-actions">
+      <a href="#proyectos" class="btn-primary">Ver proyectos →</a>
+      <a href="#contacto" class="btn-secondary">Cotizar proyecto</a>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- PRODUCTOS -->
+<section id="productos" style="background: var(--surface);">
+  <div class="wrap">
+    <div class="section-eyebrow">Productos</div>
+    <h2>Hardware listo para instalar</h2>
+    <p class="section-sub">Dispositivos fabricados, calibrados y documentados. Listos para conectar a tu proceso o plataforma de datos.</p>
+    <div class="carousel-wrap">
+      <div class="carousel-track-outer">
+        <div class="carousel-track" id="carouselTrack">
+
+          <!-- 1. Biorreactor -->
+          <div class="product-card">
+            <div class="product-img">
+              <svg width="100" height="100" viewBox="0 0 64 64" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="22" y="28" width="20" height="26" rx="4"/>
+                <path d="M22 36h20M22 44h20"/>
+                <path d="M28 28v-6h8v6"/>
+                <path d="M32 22v-6"/>
+                <circle cx="32" cy="13" r="3"/>
+                <path d="M18 38h-4M18 46h-4M46 38h4M46 46h4"/>
+                <path d="M26 54h12"/>
+              </svg>
+            </div>
+            <div class="product-body">
+              <div class="product-label">Biotecnología</div>
+              <h3>Biorreactor de laboratorio</h3>
+              <p>Control automático de pH, temperatura y agitación en lazo cerrado. Diseñado para fermentación, cultivos microbianos y producción de metabolitos a escala de laboratorio. Incluye dashboard web para monitoreo remoto y registro histórico de variables.</p>
+              <div class="product-specs">
+                <span class="spec-tag">Control PID</span>
+                <span class="spec-tag">pH · Temp · Agitación</span>
+                <span class="spec-tag">Dashboard web</span>
+                <span class="spec-tag">Registro histórico</span>
+                <span class="spec-tag">Alertas</span>
+              </div>
+              <a href="#contacto" class="product-cta">Cotizar unidad →</a>
+            </div>
+          </div>
+
+          <!-- 2. Sensor gas -->
+          <div class="product-card">
+            <div class="product-img">
+              <svg width="100" height="100" viewBox="0 0 64 64" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="18" y="30" width="28" height="22" rx="4"/>
+                <path d="M26 30v-4a6 6 0 0 1 12 0v4"/>
+                <circle cx="32" cy="41" r="5"/>
+                <path d="M32 38v3l2 2"/>
+                <path d="M14 36h4M46 36h4"/>
+                <path d="M22 52h20"/>
+                <path d="M28 25h8"/>
+              </svg>
+            </div>
+            <div class="product-body">
+              <div class="product-label">Biotecnología</div>
+              <h3>Sensor de flujo y composición de gas</h3>
+              <p>Medición continua de caudal y análisis de composición H₂/CH₄ para monitoreo de fermentaciones y producción de biogás. Transmite datos en tiempo real vía MQTT a una plataforma web con gráficas e historial.</p>
+              <div class="product-specs">
+                <span class="spec-tag">H₂ / CH₄ %</span>
+                <span class="spec-tag">Flujo volumétrico</span>
+                <span class="spec-tag">IoT / MQTT</span>
+                <span class="spec-tag">Dashboard web</span>
+                <span class="spec-tag">Alertas configurables</span>
+              </div>
+              <a href="#contacto" class="product-cta">Cotizar unidad →</a>
+            </div>
+          </div>
+
+          <!-- 3. Sensor agua -->
+          <div class="product-card">
+            <div class="product-img">
+              <svg width="100" height="100" viewBox="0 0 64 64" fill="none" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="32" cy="44" rx="16" ry="6"/>
+                <path d="M16 44v6c0 3.3 7.2 6 16 6s16-2.7 16-6v-6"/>
+                <path d="M32 8l-2 4c-4 8-10 12-10 18a12 12 0 0 0 24 0c0-6-6-10-10-18z"/>
+                <path d="M28 34a6 6 0 0 0 8 0"/>
+              </svg>
+            </div>
+            <div class="product-body">
+              <div class="product-label">Ambiental · En proceso</div>
+              <h3>Sensor flotante de calidad de agua</h3>
+              <p>Unidad autónoma diseñada para desplegarse en ríos, presas y cuerpos de agua. Mide pH, turbidez, temperatura y oxígeno disuelto, y transmite los datos vía LoRa o WiFi a un dashboard en tiempo real. Alimentación solar con respaldo de batería.</p>
+              <div class="product-specs">
+                <span class="spec-tag">pH · OD · Turbidez</span>
+                <span class="spec-tag">Temperatura</span>
+                <span class="spec-tag">LoRa / WiFi</span>
+                <span class="spec-tag">Solar + batería</span>
+                <span class="spec-tag">IP67</span>
+              </div>
+              <a href="#contacto" class="product-cta">Registrar interés →</a>
+            </div>
+          </div>
+
+          <!-- 4. Monitor vibraciones -->
+          <div class="product-card">
+            <div class="product-img">
+              <svg width="100" height="100" viewBox="0 0 64 64" fill="none" stroke="#854F0B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="22" y="26" width="20" height="20" rx="3"/>
+                <circle cx="32" cy="36" r="4"/>
+                <path d="M8 36h6M50 36h6"/>
+                <path d="M12 26l4 4M48 26l-4 4M12 46l4-4M48 46l-4-4"/>
+                <path d="M26 22v-4M38 22v-4M26 54v-4M38 54v-4"/>
+              </svg>
+            </div>
+            <div class="product-body">
+              <div class="product-label">Industria</div>
+              <h3>Monitor de vibraciones industrial</h3>
+              <p>Sensor triaxial de vibración para montaje directo en motores, bombas y maquinaria rotativa. Realiza análisis espectral FFT en tiempo real para detectar desequilibrios, desalineación y desgaste de rodamientos antes de que causen una falla costosa.</p>
+              <div class="product-specs">
+                <span class="spec-tag">3 ejes</span>
+                <span class="spec-tag">Análisis FFT</span>
+                <span class="spec-tag">IoT / MQTT</span>
+                <span class="spec-tag">Alertas en tiempo real</span>
+                <span class="spec-tag">IP54</span>
+              </div>
+              <a href="#contacto" class="product-cta">Cotizar unidad →</a>
+            </div>
+          </div>
+
+          <!-- 5. ESP32 Shield -->
+          <div class="product-card">
+            <div class="product-img">
+              <svg width="100" height="100" viewBox="0 0 64 64" fill="none" stroke="#534AB7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="12" y="14" width="40" height="36" rx="3"/>
+                <rect x="18" y="20" width="12" height="8" rx="1"/>
+                <rect x="34" y="20" width="12" height="8" rx="1"/>
+                <rect x="18" y="34" width="12" height="8" rx="1"/>
+                <rect x="34" y="34" width="12" height="8" rx="1"/>
+                <path d="M24 50v4M40 50v4M20 54h24"/>
+                <path d="M12 22H8M12 30H6M12 38H8M52 22h4M52 30h6M52 38h4"/>
+              </svg>
+            </div>
+            <div class="product-body">
+              <div class="product-label">DIY · IoT · Desarrollo</div>
+              <h3>ESP32 IoT Shield — Sensio</h3>
+              <p>Tarjeta de expansión para ESP32 diseñada para conectar sensores y actuadores en proyectos de IoT, biotecnología y química. Conectores estandarizados, protección de puertos y ejemplos de firmware incluidos. Ideal para laboratorios, makers y equipos de I+D que quieren prototipar sin diseñar PCB desde cero.</p>
+              <div class="product-specs">
+                <span class="spec-tag">ESP32 compatible</span>
+                <span class="spec-tag">I2C / SPI / UART</span>
+                <span class="spec-tag">Entradas analógicas</span>
+                <span class="spec-tag">Salidas PWM</span>
+                <span class="spec-tag">5V / 3.3V regulado</span>
+                <span class="spec-tag">Firmware de ejemplo</span>
+              </div>
+              <a href="#contacto" class="product-cta">Cotizar unidad →</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <button class="carousel-btn" id="prevBtn" aria-label="Anterior">&#8592;</button>
+      <button class="carousel-btn" id="nextBtn" aria-label="Siguiente">&#8594;</button>
+    </div>
+    <div class="carousel-footer">
+      <div class="carousel-dots" id="carouselDots"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- PROYECTOS -->
+<section id="proyectos">
+  <div class="wrap">
+    <div class="section-eyebrow">Portafolio</div>
+    <h2>Proyectos desarrollados</h2>
+    <p class="section-sub">Hardware funcional, no conceptos. Cada proyecto incluye diseño, firmware y plataforma de visualización.</p>
+    <div class="projects-grid">
+
+      <div class="project-card">
+        <span class="project-tag tag-bio">Biotecnología</span>
+        <h3>Biorreactor con control automático</h3>
+        <p>Control cerrado de pH, temperatura y agitación para fermentación en laboratorio. Mantiene condiciones óptimas de forma autónoma.</p>
+        <div class="project-links"><a href="#">Imágenes</a><a href="#">Código</a></div>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag tag-bio">Biotecnología</span>
+        <h3>Sensor de flujo de gas y biogás</h3>
+        <p>Monitoreo continuo de producción de biogás con análisis de composición H₂/CH₄ en tiempo real. Datos accesibles desde plataforma web.</p>
+        <div class="project-links"><a href="#">Imágenes</a></div>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag tag-amb">Ambiental</span>
+        <h3>Plataforma de monitoreo ambiental</h3>
+        <p>Red de sensores distribuidos con dashboard centralizado para municipios, plantas de tratamiento y organismos reguladores.</p>
+        <div class="project-links"><a href="#">Imágenes</a><a href="#">Demo</a></div>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag tag-amb">Ambiental</span>
+        <h3>Sensor IoT de olores fétidos</h3>
+        <p>Detección de H₂S y mercaptanos con alertas automáticas. Diseñado para rellenos sanitarios y plantas de tratamiento de aguas residuales.</p>
+        <div class="project-links"><a href="#">Imágenes</a></div>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag tag-amb">Ambiental</span>
+        <h3>Análisis de zonas inundables ZMG</h3>
+        <p>Análisis geoespacial de elevación para identificar y clasificar zonas con riesgo de inundación en la Zona Metropolitana de Guadalajara.</p>
+        <div class="project-links"><a href="#">Resultados</a></div>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag tag-amb">Ambiental</span>
+        <h3>Sensor de calidad de agua flotante</h3>
+        <p>Unidad autónoma para ríos y presas con transmisión IoT. Mide pH, turbidez, temperatura y oxígeno disuelto.</p>
+        <span class="project-tag tag-wip" style="margin-top:4px;">En proceso</span>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag tag-ind">Industria</span>
+        <h3>Monitor de vibraciones para motores</h3>
+        <p>Detección temprana de fallas mecánicas mediante análisis espectral continuo. Reduce paros no programados y costos de mantenimiento.</p>
+        <div class="project-links"><a href="#">Imágenes</a></div>
+      </div>
+
+      <div class="project-card">
+        <span class="project-tag tag-ind">Industria</span>
+        <h3>Plataforma de variables críticas de proceso</h3>
+        <p>Monitoreo de variables clave con alertas configurables para mantenimiento preventivo o atención inmediata a fallas. Industria 4.0.</p>
+        <div class="project-links"><a href="#">Imágenes</a><a href="#">Demo</a></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- SERVICIOS -->
+<section id="servicios">
+  <div class="wrap">
+    <div class="section-eyebrow">Cómo trabajamos</div>
+    <h2>Tres formas de trabajar con Sensio</h2>
+    <p class="section-sub">Desde un sensor listo para instalar hasta el desarrollo completo de tu plataforma IoT.</p>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-num">01 / Producto</div>
+        <h3>Sensores y hardware listo</h3>
+        <ul class="service-list">
+          <li>Unidades fabricadas y calibradas</li>
+          <li>Firmware incluido y probado</li>
+          <li>Documentación de integración</li>
+          <li>Soporte técnico inicial</li>
+        </ul>
+      </div>
+      <div class="service-card" style="border-color: var(--green-border); background: #f5fdf9;">
+        <div class="service-num">02 / Proyecto</div>
+        <h3>Desarrollo a la medida</h3>
+        <ul class="service-list">
+          <li>Diseño de hardware y PCB</li>
+          <li>Firmware embebido</li>
+          <li>Dashboard / API de datos</li>
+          <li>Entrega de archivos fuente</li>
+        </ul>
+      </div>
+      <div class="service-card">
+        <div class="service-num">03 / Consultoría</div>
+        <h3>Asesoría técnica especializada</h3>
+        <ul class="service-list">
+          <li>Revisión de arquitectura IoT</li>
+          <li>Selección de sensores y protocolo</li>
+          <li>Optimización de sistemas existentes</li>
+          <li>Capacitación de equipo técnico</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESO -->
+<section id="proceso">
+  <div class="wrap">
+    <div class="section-eyebrow">Proceso</div>
+    <h2>Del problema al producto</h2>
+    <p class="section-sub">Proceso claro, entregas en cada etapa, sin cajas negras.</p>
+    <div class="process-grid">
+      <div class="step">
+        <div class="step-circle">01</div>
+        <h3>Diagnóstico</h3>
+        <p>Entendemos tu proceso y definimos qué medir, cómo y con qué frecuencia. Resultado: documento de alcance.</p>
+      </div>
+      <div class="step">
+        <div class="step-circle">02</div>
+        <h3>Prototipo</h3>
+        <p>Hardware funcional en 2 a 4 semanas. Se valida en campo contigo antes de invertir en la versión final.</p>
+      </div>
+      <div class="step">
+        <div class="step-circle">03</div>
+        <h3>Desarrollo</h3>
+        <p>PCB final, firmware robusto y plataforma de visualización integrada con los entregables acordados.</p>
+      </div>
+      <div class="step">
+        <div class="step-circle">04</div>
+        <h3>Entrega</h3>
+        <p>Instalación, capacitación del equipo y soporte técnico post-entrega incluido en todos los proyectos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACTO -->
+<section id="contacto">
+  <div class="wrap">
+    <div class="section-eyebrow">Contacto</div>
+    <h2>¿Tienes un proyecto en mente?</h2>
+    <p class="section-sub">Cuéntanos qué quieres monitorear y te respondemos en menos de 24 horas.</p>
+    <div class="contact-grid">
+      <div>
+        <div class="contact-info-list">
+          <div class="contact-item">
+            <div class="contact-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+            <div>
+              <div class="contact-item-label">Email</div>
+              <div class="contact-item-val">hola@sensio.mx</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.32h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l1.27-.85a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7a2 2 0 0 1 1.72 2.02z"/></svg></div>
+            <div>
+              <div class="contact-item-label">WhatsApp</div>
+              <div class="contact-item-val">+52 · número de contacto</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+            <div>
+              <div class="contact-item-label">Ubicación</div>
+              <div class="contact-item-val">Guadalajara, México · proyectos remotos</div>
+            </div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></div>
+            <div>
+              <div class="contact-item-label">LinkedIn</div>
+              <div class="contact-item-val">linkedin.com/in/tu-perfil</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="contact-form">
+        <div class="field">
+          <label>Nombre y empresa</label>
+          <input type="text" placeholder="Ej. Carlos Ruiz · PTAR Norte">
+        </div>
+        <div class="field">
+          <label>Sector</label>
+          <select>
+            <option value="">Selecciona tu sector</option>
+            <option>Biotecnología / laboratorio</option>
+            <option>Ambiental / municipal</option>
+            <option>Industria / manufactura</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>¿Qué quieres monitorear o desarrollar?</label>
+          <textarea placeholder="Describe brevemente tu proyecto o necesidad..."></textarea>
+        </div>
+        <button class="btn-primary" type="button">Enviar mensaje →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><div class="footer-dot"></div>sensio</div>
+  <div class="footer-copy">© 2025 Sensio · sensio.mx · Guadalajara, México</div>
+</footer>
+
+<script>
+  // Lecturas de sensor simuladas — firma visual del hero
+  const sensors = {
+    'r-ph':   { base: 7.02, delta: 0.05, decimals: 2 },
+    'r-temp': { base: 36.8, delta: 0.3,  decimals: 1 },
+    'r-ch4':  { base: 58.3, delta: 0.8,  decimals: 1 },
+    'r-vib':  { base: 0.12, delta: 0.03, decimals: 2 },
+    'r-h2s':  { base: 14,   delta: 2,    decimals: 0 },
+    'r-turb': { base: 3.4,  delta: 0.2,  decimals: 1 }
+  };
+
+  function updateReadings() {
+    Object.entries(sensors).forEach(([id, cfg]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const val = cfg.base + (Math.random() - 0.5) * cfg.delta * 2;
+      el.textContent = val.toFixed(cfg.decimals);
+    });
+  }
+
+  setInterval(updateReadings, 1800);
+</script>
+
+
+<script>
+  // Menú móvil
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  function closeMobile() { mobileMenu.classList.remove('open'); }
+  if (hamburger) {
+    hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+  }
+
+  // Carrusel de productos — usa px reales, no porcentajes
+  (function() {
+    const outer = document.querySelector('.carousel-track-outer');
+    const track = document.getElementById('carouselTrack');
+    const dotsContainer = document.getElementById('carouselDots');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    if (!track) return;
+
+    const cards = Array.from(track.querySelectorAll('.product-card'));
+    const total = cards.length;
+    let current = 0;
+
+    function setWidths() {
+      const w = outer.offsetWidth;
+      cards.forEach(c => { c.style.minWidth = w + 'px'; c.style.maxWidth = w + 'px'; });
+      track.style.width = (w * total) + 'px';
+      goTo(current);
+    }
+
+    // Dots
+    cards.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', 'Producto ' + (i + 1));
+      dot.addEventListener('click', () => goTo(i));
+      dotsContainer.appendChild(dot);
+    });
+
+    function goTo(n) {
+      current = (n + total) % total;
+      const w = outer.offsetWidth;
+      track.style.transform = 'translateX(-' + (current * w) + 'px)';
+      dotsContainer.querySelectorAll('.carousel-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === current);
+      });
+    }
+
+    prevBtn.addEventListener('click', () => goTo(current - 1));
+    nextBtn.addEventListener('click', () => goTo(current + 1));
+
+    // Swipe
+    let startX = 0;
+    track.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend', e => {
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) goTo(current + (diff > 0 ? 1 : -1));
+    });
+
+    window.addEventListener('resize', setWidths);
+    setWidths();
+  })();
+</script>
+
+</body>
+</html>
