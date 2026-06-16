@@ -51,9 +51,11 @@ def _add_industries_layer(fig: go.Figure, industries: dict | None) -> None:
         go.Scattermapbox(
             lat=industries["lat"],
             lon=industries["lon"],
-            mode="text",
+            mode="markers+text",
+            marker={"size": 2, "color": "rgba(0,0,0,0)"},
             text=["★"] * n,
-            textfont={"size": 18, "color": "#000000"},
+            textfont={"size": 20, "color": "#000000", "family": "Arial Unicode MS Regular"},
+            textposition="middle center",
             hovertext=industries["texts"],
             hoverinfo="text",
             name="Industrias",
