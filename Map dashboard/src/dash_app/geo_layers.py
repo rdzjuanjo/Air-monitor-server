@@ -101,10 +101,7 @@ def load_industries(path: Path = INDUSTRIES_PATH) -> dict | None:
         lons.append(lon)
         texts.append(
             f"<b>{props.get('nombre', '')}</b><br>"
-            f"{props.get('giro', '')}<br>"
-            f"SCIAN: {props.get('scian', '')}<br>"
-            f"Riesgo: <b>{props.get('nivel', '')}</b><br>"
-            f"Empleados: {props.get('estrato', '')}"
+            f"{props.get('giro', '')}"
         )
 
     return {"lat": lats, "lon": lons, "texts": texts} if lats else None
