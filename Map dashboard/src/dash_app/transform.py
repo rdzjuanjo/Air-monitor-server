@@ -39,7 +39,7 @@ def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, window: QueryWindow
     grouped = grouped[grouped["time_bucket"].isin(all_buckets)]
     grouped["frame_label"] = (
         grouped["time_bucket"]
-        .dt.tz_convert("America/Guadalajara")
+        .dt.tz_convert("America/Mexico_City")
         .dt.strftime("%Y-%m-%d %H:%M %Z")
     )
 

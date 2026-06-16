@@ -11,7 +11,7 @@ from src.dash_app.influx_client import QueryWindow, query_available_dates, query
 from src.dash_app.transform import aggregate_to_frames
 from src.dash_app.viz import build_animated_map
 
-_GDL = ZoneInfo("America/Guadalajara")
+_GDL = ZoneInfo("America/Mexico_City")
 
 
 st.set_page_config(page_title="Dashboard ambiental 24h", layout="wide", initial_sidebar_state="collapsed")
