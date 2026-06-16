@@ -46,17 +46,14 @@ def _add_dren_layer(fig: go.Figure, dren_lines: list[dict] | None, dren_width: f
 def _add_industries_layer(fig: go.Figure, industries: dict | None) -> None:
     if not industries or not industries.get("lat"):
         return
+    n = len(industries["lat"])
     fig.add_trace(
         go.Scattermapbox(
             lat=industries["lat"],
             lon=industries["lon"],
-            mode="markers",
-            marker={
-                "size": 16,
-                "symbol": "star",
-                "color": "#000000",
-                "opacity": 1.0,
-            },
+            mode="text",
+            text=["★"] * n,
+            textfont={"size": 18, "color": "#000000"},
             hovertext=industries["texts"],
             hoverinfo="text",
             name="Industrias",
