@@ -53,7 +53,8 @@ def _add_industries_layer(fig: go.Figure, industries: dict | None) -> None:
             mode="markers",
             marker={
                 "size": 16,
-                "color": "#e65100",
+                "symbol": "star",
+                "color": "#000000",
                 "opacity": 1.0,
             },
             hovertext=industries["texts"],
