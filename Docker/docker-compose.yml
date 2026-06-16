@@ -143,6 +143,7 @@ services:
       - certbot_www:/var/www/certbot
       - ota_files:/usr/share/nginx/ota:ro
       - ./landing:/usr/share/nginx/landing:ro
+      - ./mapa:/usr/share/nginx/mapa:ro
     depends_on:
       - mosquitto
       - grafana
