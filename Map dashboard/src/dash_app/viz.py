@@ -22,40 +22,50 @@ def _add_cuenca_layer(fig: go.Figure, cuenca_data: dict | None) -> None:
     )
 
 
-def _add_dren_layer(fig: go.Figure, dren_lines: dict | None, dren_width: float, dren_color: str) -> None:
-    if not dren_lines or not dren_lines.get("lat"):
+def _add_dren_layer(fig: go.Figure, dren_lines: list[dict] | None, dren_width: float, dren_color: str) -> None:
+    if not dren_lines:
         return
-    fig.add_trace(
-        go.Scattermapbox(
-            lat=dren_lines["lat"],
-            lon=dren_lines["lon"],
-            mode="lines",
-            line={"width": float(dren_width), "color": dren_color},
-            hoverinfo="skip",
-            name="Dren",
+    # dren_lines es una lista de buckets {lat, lon, width, color} por acumulación de flujo.
+    # dren_width escala todos los anchos relativos al default de 1.5.
+    scale = float(dren_width) / 1.5
+    for bucket in dren_lines:
+        if not bucket.get("lat"):
+            continue
+        fig.add_trace(
+            go.Scattermapbox(
+                lat=bucket["lat"],
+                lon=bucket["lon"],
+                mode="lines",
+                line={"width": max(0.3, bucket["width"] * scale), "color": bucket["color"]},
+                hoverinfo="skip",
+                name="Dren",
+            )
         )
-    )
 
 
-def _add_industries_layer(fig: go.Figure, industries: dict | None) -> None:
-    if not industries or not industries.get("lat"):
+def _add_industries_layer(fig: go.Figure, industries: list[dict] | None) -> None:
+    if not industries:
         return
-    fig.add_trace(
-        go.Scattermapbox(
-            lat=industries["lat"],
-            lon=industries["lon"],
-            mode="markers",
-            marker={
-                "size": 14,
-                "symbol": "industry",
-                "color": industries["colors"],
-                "opacity": 0.9,
-            },
-            hovertext=industries["texts"],
-            hoverinfo="text",
-            name="Industrias",
+    # Un trace por nivel de riesgo para que el color único funcione con símbolo Maki.
+    for group in industries:
+        if not group.get("lat"):
+            continue
+        fig.add_trace(
+            go.Scattermapbox(
+                lat=group["lat"],
+                lon=group["lon"],
+                mode="markers",
+                marker={
+                    "size": 14,
+                    "symbol": "industry",
+                    "color": group["color"],
+                    "opacity": 0.9,
+                },
+                hovertext=group["texts"],
+                hoverinfo="text",
+                name=f"Industrias · {group['nivel']}",
+            )
         )
-    )
 
 
 def build_empty_map(
