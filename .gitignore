@@ -1,1 +1,5 @@
 .env
+CLAUDE.md
+.claude/
+.vscode/
+MapaAhogado/
