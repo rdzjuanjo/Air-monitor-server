@@ -5,6 +5,23 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 
+def _add_cuenca_layer(fig: go.Figure, cuenca_data: dict | None) -> None:
+    if not cuenca_data or not cuenca_data.get("lat"):
+        return
+    fig.add_trace(
+        go.Scattermapbox(
+            lat=cuenca_data["lat"],
+            lon=cuenca_data["lon"],
+            mode="lines",
+            fill="toself",
+            fillcolor="rgba(82,183,136,0.12)",
+            line={"width": 2, "color": "#1a6634"},
+            hoverinfo="skip",
+            name="Cuenca",
+        )
+    )
+
+
 def _add_dren_layer(fig: go.Figure, dren_lines: dict | None, dren_width: float, dren_color: str) -> None:
     if not dren_lines or not dren_lines.get("lat"):
         return
@@ -20,6 +37,27 @@ def _add_dren_layer(fig: go.Figure, dren_lines: dict | None, dren_width: float, 
     )
 
 
+def _add_industries_layer(fig: go.Figure, industries: dict | None) -> None:
+    if not industries or not industries.get("lat"):
+        return
+    fig.add_trace(
+        go.Scattermapbox(
+            lat=industries["lat"],
+            lon=industries["lon"],
+            mode="markers",
+            marker={
+                "size": 14,
+                "symbol": "industry",
+                "color": industries["colors"],
+                "opacity": 0.9,
+            },
+            hovertext=industries["texts"],
+            hoverinfo="text",
+            name="Industrias",
+        )
+    )
+
+
 def build_empty_map(
     center_lat: float,
     center_lon: float,
@@ -27,6 +65,8 @@ def build_empty_map(
     dren_lines: dict | None = None,
     dren_width: float = 1.5,
     dren_color: str = "blue",
+    cuenca_data: dict | None = None,
+    industries: dict | None = None,
 ):
     fig = go.Figure(go.Scattermapbox())
     fig.update_layout(
@@ -38,7 +78,9 @@ def build_empty_map(
         uirevision="map-interaction",
         showlegend=False,
     )
+    _add_cuenca_layer(fig, cuenca_data)
     _add_dren_layer(fig, dren_lines, dren_width, dren_color)
+    _add_industries_layer(fig, industries)
     return fig
 
 
@@ -63,6 +105,8 @@ def build_animated_map(
     dren_lines: dict | None = None,
     dren_width: float = 1.5,
     dren_color: str = "blue",
+    cuenca_data: dict | None = None,
+    industries: dict | None = None,
 ):
     if df.empty:
         return build_empty_map(
@@ -72,6 +116,8 @@ def build_animated_map(
             dren_lines=dren_lines,
             dren_width=dren_width,
             dren_color=dren_color,
+            cuenca_data=cuenca_data,
+            industries=industries,
         )
 
     cmin = float(df["value"].min())
@@ -163,8 +209,10 @@ def build_animated_map(
         first_sub = groups.get(first_label, df.iloc[0:0])
         fig.add_trace(_marker_trace(first_sub))
 
-    # Capa estatica del dren, agregada al final y fuera de frame.traces para
-    # que permanezca fija durante toda la animacion.
+    # Capas estaticas: se agregan al final y fuera de frame.traces para que
+    # permanezcan fijas durante toda la animacion.
+    _add_cuenca_layer(fig, cuenca_data)
     _add_dren_layer(fig, dren_lines, dren_width, dren_color)
+    _add_industries_layer(fig, industries)
 
     return fig

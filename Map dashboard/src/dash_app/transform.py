@@ -37,7 +37,11 @@ def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, now_utc: datetime) 
     all_buckets = pd.date_range(start=start_bucket, end=current_bucket, freq=f"{step_minutes}min", tz="UTC")
 
     grouped = grouped[grouped["time_bucket"].isin(all_buckets)]
-    grouped["frame_label"] = grouped["time_bucket"].dt.strftime("%Y-%m-%d %H:%M UTC")
+    grouped["frame_label"] = (
+        grouped["time_bucket"]
+        .dt.tz_convert("America/Mexico_City")
+        .dt.strftime("%Y-%m-%d %H:%M %Z")
+    )
 
     coverage = (
         grouped.groupby("time_bucket")["station_id"].nunique().rename("stations_seen").reset_index()

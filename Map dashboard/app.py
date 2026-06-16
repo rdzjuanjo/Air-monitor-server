@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import streamlit as st
 
 from src.dash_app.config import SettingsError, load_settings
-from src.dash_app.geo_layers import load_dren_lines
+from src.dash_app.geo_layers import load_cuenca, load_dren_lines, load_industries
 from src.dash_app.influx_client import default_window, query_measurements
 from src.dash_app.transform import aggregate_to_frames
 from src.dash_app.viz import build_animated_map
@@ -114,6 +114,10 @@ dren_width = st.sidebar.slider(
     step=0.5,
 )
 
+st.sidebar.subheader("Capas adicionales")
+show_cuenca = st.sidebar.checkbox("Mostrar límite de cuenca", value=True)
+show_industries = st.sidebar.checkbox("Mostrar industrias (DENUE)", value=True)
+
 if st.sidebar.button("Recargar datos", type="primary"):
     _fetch.clear()
 
@@ -160,7 +164,9 @@ frame_df, _meta = aggregate_to_frames(
 if raw_df.empty:
     st.warning("No hay datos para las ultimas 24 horas con los filtros actuales. Mostrando mapa vacio.")
 
-dren_lines = load_dren_lines() if show_dren else None
+dren_lines   = load_dren_lines() if show_dren else None
+cuenca_data  = load_cuenca()     if show_cuenca else None
+industries   = load_industries() if show_industries else None
 
 fig = build_animated_map(
     frame_df,
@@ -176,6 +182,8 @@ fig = build_animated_map(
     dren_lines=dren_lines,
     dren_width=float(dren_width),
     dren_color="blue",
+    cuenca_data=cuenca_data,
+    industries=industries,
 )
 if fig is None:
     st.warning("No se pudo construir la animacion con los datos actuales.")
