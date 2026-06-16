@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import zoneinfo
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
 import pandas as pd
 from influxdb_client import InfluxDBClient
 
 from .config import Settings
+
+_GDL = zoneinfo.ZoneInfo("America/Guadalajara")
 
 
 @dataclass(frozen=True)
@@ -117,3 +120,35 @@ def list_stations(settings: Settings, window: QueryWindow) -> list[str]:
     if df.empty:
         return []
     return sorted(df["station_id"].unique().tolist())
+
+
+def query_available_dates(settings: Settings, lookback_days: int = 90) -> list[date]:
+    """Retorna fechas (hora Guadalajara) que tienen al menos una medición, más reciente primero."""
+    query = f"""
+from(bucket: "{settings.influx_bucket}")
+  |> range(start: -{lookback_days}d)
+  |> filter(fn: (r) => r._measurement == "{settings.influx_measurement}" and r._field == "{settings.value_field}")
+  |> aggregateWindow(every: 1h, fn: count, createEmpty: false)
+  |> keep(columns: ["_time"])
+""".strip()
+
+    with InfluxDBClient(
+        url=settings.influx_url,
+        token=settings.influx_token,
+        org=settings.influx_org,
+        timeout=30_000,
+    ) as client:
+        data = client.query_api().query_data_frame(query)
+
+    if isinstance(data, list):
+        if not data:
+            return []
+        df = pd.concat(data, ignore_index=True)
+    else:
+        df = data
+
+    if df.empty or "_time" not in df.columns:
+        return []
+
+    times = pd.to_datetime(df["_time"], utc=True).dt.tz_convert(_GDL)
+    return sorted({t.date() for t in times}, reverse=True)

@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import streamlit as st
 
 from src.dash_app.config import SettingsError, load_settings
 from src.dash_app.geo_layers import load_cuenca, load_dren_lines, load_industries
-from src.dash_app.influx_client import default_window, query_measurements
+from src.dash_app.influx_client import QueryWindow, query_available_dates, query_measurements
 from src.dash_app.transform import aggregate_to_frames
 from src.dash_app.viz import build_animated_map
+
+_GDL = ZoneInfo("America/Guadalajara")
 
 
 st.set_page_config(page_title="Dashboard ambiental 24h", layout="wide", initial_sidebar_state="collapsed")
@@ -27,12 +30,23 @@ DEFAULT_CENTER_LON = -103.2537
 DEFAULT_ZOOM = 11.5
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def _fetch_available_dates(settings_dict: dict) -> list:
+    return query_available_dates(load_settings())
+
+
 @st.cache_data(show_spinner=False, ttl=300)
-def _fetch(settings_dict: dict, selected_stations: tuple[str, ...]):
+def _fetch(settings_dict: dict, selected_stations: tuple[str, ...], date_iso: str):
     settings = load_settings()
-    window = default_window(settings.window_hours)
+    sel_date = date.fromisoformat(date_iso)
+    day_start = datetime(sel_date.year, sel_date.month, sel_date.day, tzinfo=_GDL)
+    day_stop = datetime.now(tz=_GDL) if sel_date >= date.today() else day_start + timedelta(hours=24)
+    window = QueryWindow(
+        start=day_start.astimezone(timezone.utc),
+        stop=day_stop.astimezone(timezone.utc),
+    )
     station_filter = list(selected_stations) if selected_stations else None
-    return query_measurements(settings=settings, window=window, station_filter=station_filter)
+    return query_measurements(settings=settings, window=window, station_filter=station_filter), window
 
 
 try:
@@ -43,6 +57,16 @@ except SettingsError as exc:
     st.stop()
 
 st.sidebar.header("Controles")
+
+available_dates = _fetch_available_dates(settings.__dict__)
+selected_date = st.sidebar.date_input(
+    "Día a visualizar",
+    value=available_dates[0] if available_dates else date.today(),
+    min_value=available_dates[-1] if available_dates else date.today(),
+    max_value=date.today(),
+    help="Muestra datos de 00:00 a 23:59 hora de Guadalajara del día seleccionado.",
+)
+
 raw_station_filter = st.sidebar.text_input(
     "Filtro de estaciones (coma separada)",
     value="",
@@ -122,7 +146,7 @@ if st.sidebar.button("Recargar datos", type="primary"):
     _fetch.clear()
 
 with st.spinner("Consultando InfluxDB..."):
-    raw_df = _fetch(settings.__dict__, selected_stations)
+    raw_df, selected_window = _fetch(settings.__dict__, selected_stations, selected_date.isoformat())
 
 if raw_df.empty:
     default_center_lat = DEFAULT_CENTER_LAT
@@ -158,11 +182,15 @@ map_center_lon = st.sidebar.number_input(
 frame_df, _meta = aggregate_to_frames(
     raw_df,
     step_minutes=settings.step_minutes,
-    now_utc=datetime.now(timezone.utc),
+    window=selected_window,
 )
 
 if raw_df.empty:
-    st.warning("No hay datos para las ultimas 24 horas con los filtros actuales. Mostrando mapa vacio.")
+    msg = f"No hay datos para el {selected_date.strftime('%d/%m/%Y')} con los filtros actuales."
+    if available_dates:
+        fechas = ", ".join(d.strftime("%d/%m/%Y") for d in available_dates[:5])
+        msg += f" Fechas recientes con datos: {fechas}."
+    st.warning(msg)
 
 dren_lines   = load_dren_lines() if show_dren else None
 cuenca_data  = load_cuenca()     if show_cuenca else None
