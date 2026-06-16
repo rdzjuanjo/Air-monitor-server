@@ -18,11 +18,6 @@ _DREN_BUCKETS = [
     (0.40, 1.01, 3.5,  "#0a3d7a"),
 ]
 
-_RISK_COLORS = {
-    "Alto":       "#d73027",
-    "Medio-Alto": "#fc8d59",
-    "Medio":      "#e6c619",
-}
 
 
 @st.cache_resource(show_spinner=False)
@@ -88,33 +83,28 @@ def load_cuenca(path: Path = CUENCA_PATH) -> dict[str, list] | None:
 
 
 @st.cache_resource(show_spinner=False)
-def load_industries(path: Path = INDUSTRIES_PATH) -> list[dict] | None:
-    """Carga industrias agrupadas por nivel de riesgo (un trace por grupo)."""
+def load_industries(path: Path = INDUSTRIES_PATH) -> dict | None:
+    """Carga todos los puntos de industrias en un único dict lat/lon/texts."""
     if not path.exists():
         return None
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
 
-    groups: dict[str, dict] = {}
+    lats, lons, texts = [], [], []
     for feat in data.get("features", []):
         geom  = feat.get("geometry") or {}
         props = feat.get("properties") or {}
         if geom.get("type") != "Point":
             continue
         lon, lat = geom["coordinates"]
-        nivel = props.get("nivel", "Medio")
-        color = _RISK_COLORS.get(nivel, "#888888")
-        if nivel not in groups:
-            groups[nivel] = {"lat": [], "lon": [], "color": color, "texts": [], "nivel": nivel}
-        g = groups[nivel]
-        g["lat"].append(lat)
-        g["lon"].append(lon)
-        g["texts"].append(
+        lats.append(lat)
+        lons.append(lon)
+        texts.append(
             f"<b>{props.get('nombre', '')}</b><br>"
             f"{props.get('giro', '')}<br>"
             f"SCIAN: {props.get('scian', '')}<br>"
-            f"Riesgo: <b>{nivel}</b><br>"
+            f"Riesgo: <b>{props.get('nivel', '')}</b><br>"
             f"Empleados: {props.get('estrato', '')}"
         )
 
-    return list(groups.values()) or None
+    return {"lat": lats, "lon": lons, "texts": texts} if lats else None
