@@ -32,8 +32,8 @@ def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, window: QueryWindow
 
     station_count = grouped["station_id"].nunique()
 
-    start_bucket = pd.Timestamp(window.start.astimezone(timezone.utc)).ceil(f"{step_minutes}min")
-    end_bucket   = pd.Timestamp(window.stop.astimezone(timezone.utc)).floor(f"{step_minutes}min")
+    start_bucket = pd.Timestamp(window.start).ceil(f"{step_minutes}min")
+    end_bucket   = pd.Timestamp(window.stop).floor(f"{step_minutes}min")
     all_buckets  = pd.date_range(start=start_bucket, end=end_bucket, freq=f"{step_minutes}min", tz="UTC")
 
     grouped = grouped[grouped["time_bucket"].isin(all_buckets)]
