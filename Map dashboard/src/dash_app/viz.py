@@ -49,7 +49,7 @@ def _add_industries_layer(fig: go.Figure, industries: dict | None) -> None:
             lat=industries["lat"],
             lon=industries["lon"],
             mode="markers",
-            marker={"size": 14, "symbol": "industry", "color": "#000000", "opacity": 0.9},
+            marker={"size": 10, "symbol": "industry", "color": "#000000", "opacity": 0.9},
             hovertext=industries["texts"],
             hoverinfo="text",
             name="Industrias",
@@ -158,6 +158,12 @@ def build_animated_map(
     # del mapa, justo debajo del titulo de la pagina.
     if fig.layout.updatemenus:
         updatemenu = fig.layout.updatemenus[0].to_plotly_json()
+        # Reemplaza glifos de Plotly (que a veces no cargan) con unicode estándar.
+        buttons = updatemenu.get("buttons", [])
+        if len(buttons) >= 1:
+            buttons[0]["label"] = "▶"
+        if len(buttons) >= 2:
+            buttons[1]["label"] = "⏸"
         updatemenu.update({"x": 0.0, "y": 1.15, "xanchor": "left", "yanchor": "top"})
         fig.update_layout(updatemenus=[updatemenu])
     if fig.layout.sliders:
