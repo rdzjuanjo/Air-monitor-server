@@ -5,29 +5,59 @@ from pathlib import Path
 
 import streamlit as st
 
-DREN_LINES_PATH  = Path(__file__).parent / "dren_lines.geojson"
-CUENCA_PATH      = Path(__file__).parent / "cuenca.geojson"
-INDUSTRIES_PATH  = Path(__file__).parent / "industries.geojson"
+DREN_LINES_PATH = Path(__file__).parent / "dren_lines.geojson"
+CUENCA_PATH     = Path(__file__).parent / "cuenca.geojson"
+INDUSTRIES_PATH = Path(__file__).parent / "industries.geojson"
+
+# Buckets de drenaje: (acc_min, acc_max, width_px, color)
+# acc está normalizado 0-1 según la acumulación máxima de la cuenca
+_DREN_BUCKETS = [
+    (0.0,  0.05, 0.7,  "#a8d5f5"),
+    (0.05, 0.15, 1.3,  "#5aaee0"),
+    (0.15, 0.40, 2.2,  "#1a73c8"),
+    (0.40, 1.01, 3.5,  "#0a3d7a"),
+]
+
+_RISK_COLORS = {
+    "Alto":       "#d73027",
+    "Medio-Alto": "#fc8d59",
+    "Medio":      "#e6c619",
+}
 
 
 @st.cache_resource(show_spinner=False)
-def load_dren_lines(path: Path = DREN_LINES_PATH) -> dict[str, list] | None:
+def load_dren_lines(path: Path = DREN_LINES_PATH) -> list[dict] | None:
+    """Carga la red de drenaje agrupada en buckets por acumulación de flujo.
+    Retorna lista de dicts {lat, lon, width, color} listos para Scattermapbox."""
     if not path.exists():
         return None
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
-    lats: list[float | None] = []
-    lons: list[float | None] = []
+
+    buckets: list[dict] = [
+        {"lat": [], "lon": [], "width": w, "color": c}
+        for _, _, w, c in _DREN_BUCKETS
+    ]
+
     for feature in data.get("features", []):
-        geometry = feature.get("geometry") or {}
-        if geometry.get("type") != "LineString":
+        geom = feature.get("geometry") or {}
+        if geom.get("type") != "LineString":
             continue
-        for lon, lat in geometry["coordinates"]:
-            lats.append(lat)
-            lons.append(lon)
-        lats.append(None)
-        lons.append(None)
-    return {"lat": lats, "lon": lons}
+        acc = (feature.get("properties") or {}).get("acc", 0.0)
+        idx = 0
+        for i, (lo, hi, _, _) in enumerate(_DREN_BUCKETS):
+            if lo <= acc < hi:
+                idx = i
+                break
+        b = buckets[idx]
+        for lon, lat in geom["coordinates"]:
+            b["lat"].append(lat)
+            b["lon"].append(lon)
+        b["lat"].append(None)
+        b["lon"].append(None)
+
+    result = [b for b in buckets if b["lat"]]
+    return result or None
 
 
 @st.cache_resource(show_spinner=False)
@@ -58,26 +88,33 @@ def load_cuenca(path: Path = CUENCA_PATH) -> dict[str, list] | None:
 
 
 @st.cache_resource(show_spinner=False)
-def load_industries(path: Path = INDUSTRIES_PATH) -> dict | None:
+def load_industries(path: Path = INDUSTRIES_PATH) -> list[dict] | None:
+    """Carga industrias agrupadas por nivel de riesgo (un trace por grupo)."""
     if not path.exists():
         return None
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
-    lats, lons, colors, texts = [], [], [], []
+
+    groups: dict[str, dict] = {}
     for feat in data.get("features", []):
         geom  = feat.get("geometry") or {}
         props = feat.get("properties") or {}
         if geom.get("type") != "Point":
             continue
         lon, lat = geom["coordinates"]
-        lats.append(lat)
-        lons.append(lon)
-        colors.append(props.get("color", "#888888"))
-        texts.append(
+        nivel = props.get("nivel", "Medio")
+        color = _RISK_COLORS.get(nivel, "#888888")
+        if nivel not in groups:
+            groups[nivel] = {"lat": [], "lon": [], "color": color, "texts": [], "nivel": nivel}
+        g = groups[nivel]
+        g["lat"].append(lat)
+        g["lon"].append(lon)
+        g["texts"].append(
             f"<b>{props.get('nombre', '')}</b><br>"
             f"{props.get('giro', '')}<br>"
             f"SCIAN: {props.get('scian', '')}<br>"
-            f"Riesgo: <b>{props.get('nivel', '')}</b><br>"
+            f"Riesgo: <b>{nivel}</b><br>"
             f"Empleados: {props.get('estrato', '')}"
         )
-    return {"lat": lats, "lon": lons, "colors": colors, "texts": texts} if lats else None
+
+    return list(groups.values()) or None
