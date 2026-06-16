@@ -43,29 +43,25 @@ def _add_dren_layer(fig: go.Figure, dren_lines: list[dict] | None, dren_width: f
         )
 
 
-def _add_industries_layer(fig: go.Figure, industries: list[dict] | None) -> None:
-    if not industries:
+def _add_industries_layer(fig: go.Figure, industries: dict | None) -> None:
+    if not industries or not industries.get("lat"):
         return
-    # Un trace por nivel de riesgo para que el color único funcione con símbolo Maki.
-    for group in industries:
-        if not group.get("lat"):
-            continue
-        fig.add_trace(
-            go.Scattermapbox(
-                lat=group["lat"],
-                lon=group["lon"],
-                mode="markers",
-                marker={
-                    "size": 14,
-                    "symbol": "industry",
-                    "color": group["color"],
-                    "opacity": 0.9,
-                },
-                hovertext=group["texts"],
-                hoverinfo="text",
-                name=f"Industrias · {group['nivel']}",
-            )
+    fig.add_trace(
+        go.Scattermapbox(
+            lat=industries["lat"],
+            lon=industries["lon"],
+            mode="markers",
+            marker={
+                "size": 16,
+                "color": "#e65100",
+                "opacity": 1.0,
+                "line": {"width": 2, "color": "#ffffff"},
+            },
+            hovertext=industries["texts"],
+            hoverinfo="text",
+            name="Industrias",
         )
+    )
 
 
 def build_empty_map(
