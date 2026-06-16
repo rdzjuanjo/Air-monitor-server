@@ -55,7 +55,6 @@ def _add_industries_layer(fig: go.Figure, industries: dict | None) -> None:
                 "size": 16,
                 "color": "#e65100",
                 "opacity": 1.0,
-                "line": {"width": 2, "color": "#ffffff"},
             },
             hovertext=industries["texts"],
             hoverinfo="text",
