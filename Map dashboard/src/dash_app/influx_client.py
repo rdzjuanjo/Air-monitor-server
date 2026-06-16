@@ -10,7 +10,7 @@ from influxdb_client import InfluxDBClient
 
 from .config import Settings
 
-_GDL = zoneinfo.ZoneInfo("America/Guadalajara")
+_GDL = zoneinfo.ZoneInfo("America/Mexico_City")
 
 
 @dataclass(frozen=True)
