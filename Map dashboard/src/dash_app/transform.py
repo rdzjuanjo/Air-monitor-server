@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
 
 import pandas as pd
+
+from .influx_client import QueryWindow
 
 
 @dataclass(frozen=True)
@@ -13,7 +14,7 @@ class TransformMeta:
     coverage_mean: float
 
 
-def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, now_utc: datetime) -> tuple[pd.DataFrame, TransformMeta]:
+def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, window: QueryWindow) -> tuple[pd.DataFrame, TransformMeta]:
     if df.empty:
         empty = pd.DataFrame(
             columns=["time_bucket", "station_id", "lat", "lon", "value", "frame_label", "coverage"]
@@ -31,10 +32,9 @@ def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, now_utc: datetime) 
 
     station_count = grouped["station_id"].nunique()
 
-    utc_now = now_utc.astimezone(timezone.utc)
-    current_bucket = pd.Timestamp(utc_now).floor(f"{step_minutes}min")
-    start_bucket = current_bucket - pd.Timedelta(hours=24) + pd.Timedelta(minutes=step_minutes)
-    all_buckets = pd.date_range(start=start_bucket, end=current_bucket, freq=f"{step_minutes}min", tz="UTC")
+    start_bucket = pd.Timestamp(window.start.astimezone(timezone.utc)).ceil(f"{step_minutes}min")
+    end_bucket   = pd.Timestamp(window.stop.astimezone(timezone.utc)).floor(f"{step_minutes}min")
+    all_buckets  = pd.date_range(start=start_bucket, end=end_bucket, freq=f"{step_minutes}min", tz="UTC")
 
     grouped = grouped[grouped["time_bucket"].isin(all_buckets)]
     grouped["frame_label"] = (
