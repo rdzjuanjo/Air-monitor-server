@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from influxdb_client import InfluxDBClient
+
+TZ_CDMX = ZoneInfo("America/Mexico_City")
 
 ONLINE_THRESHOLD = timedelta(hours=24)
 DEVICE_LOOKBACK = "-30d"
@@ -69,6 +72,7 @@ def get_recent_devices(config, hidden_ids: set[str] | None = None) -> list[dict]
         if last_seen.tzinfo is None:
             last_seen = last_seen.replace(tzinfo=timezone.utc)
         row["online"] = (now - last_seen) < ONLINE_THRESHOLD
+        row["last_seen"] = last_seen.astimezone(TZ_CDMX)
         devices.append(row)
 
     devices.sort(key=lambda d: (not d["online"], d["device_id"]))
