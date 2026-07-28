@@ -42,7 +42,7 @@
     </div>
 
     <div class="card-status">
-      <div><strong>Ultimo mensaje:</strong> {{ d.last_seen.strftime('%Y-%m-%d %H:%M:%S') }} UTC</div>
+      <div><strong>Ultimo mensaje:</strong> {{ d.last_seen.strftime('%Y-%m-%d %H:%M:%S') }} CDMX</div>
       <div><strong>Firmware:</strong> {{ d.fw if d.fw is defined else "-" }}</div>
       <div><strong>CVOL:</strong> {{ "%.2f"|format(d.cvol) if d.cvol is defined else "-" }} ppm</div>
       <div><strong>RSSI:</strong> {{ d.rssi | int if d.rssi is defined else "-" }} dBm</div>

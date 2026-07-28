@@ -16,6 +16,8 @@ _GDL = ZoneInfo("America/Mexico_City")
 
 st.set_page_config(page_title="Dashboard ambiental 24h", layout="wide", initial_sidebar_state="collapsed")
 st.title("Mapa dinámico de olores")
+_now_cdmx = datetime.now(tz=_GDL)
+st.caption(f"Hora CDMX: {_now_cdmx.strftime('%H:%M')} — {_now_cdmx.strftime('%d/%m/%Y')}")
 
 # Threshold fijo para valores altos (rojo) en el heatmap.
 # CVOL (MQ135) en ppm: <8 buena, 8-16 media, >16 mala (ver mqGetAirQualityLevel
@@ -24,9 +26,9 @@ st.title("Mapa dinámico de olores")
 # por lo que el punto se veia casi invisible/transparente en el mapa.
 HIGH_THRESHOLD_VALUE = 16.0
 
-# Centro por default: punto medio entre El Salto, Jalisco y Las Pintas.
-DEFAULT_CENTER_LAT = 20.5470
-DEFAULT_CENTER_LON = -103.2537
+# Centro por default: comunidad de El Salto, Jalisco.
+DEFAULT_CENTER_LAT = 20.5181
+DEFAULT_CENTER_LON = -103.1867
 DEFAULT_ZOOM = 11.5
 
 
@@ -139,7 +141,7 @@ dren_width = st.sidebar.slider(
 )
 
 st.sidebar.subheader("Capas adicionales")
-show_cuenca = st.sidebar.checkbox("Mostrar límite de cuenca", value=True)
+show_cuenca = st.sidebar.checkbox("Mostrar límite de cuenca", value=False)
 show_industries = st.sidebar.checkbox("Mostrar industrias (DENUE)", value=True)
 
 if st.sidebar.button("Recargar datos", type="primary"):
