@@ -136,8 +136,8 @@ def build_animated_map(
             industries=industries,
         )
 
-    cmin = float(df["value"].min())
-    cmax = max(float(high_threshold), cmin + 1e-9)
+    cmin = 0.0
+    cmax = float(high_threshold)
 
     fig = px.density_map(
         df,
