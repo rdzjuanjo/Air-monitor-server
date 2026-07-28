@@ -150,10 +150,13 @@ def build_animated_map(
         hover_data={"value": ":.1f", "frame_label": True, "coverage": ":.1f"},
         animation_frame="frame_label",
         color_continuous_scale=HEATMAP_COLORSCALE,
-        range_color=[cmin, cmax],
         zoom=zoom,
         height=650,
     )
+    # density_map aplica estimación kernel sobre z, por lo que los valores
+    # renderizados por píxel no corresponden al z original. Sin range_color
+    # Plotly autoescala y el punto más caliente de cada frame siempre llega
+    # al rojo. cmin/cmax solo controlan el color de los marcadores sólidos.
 
     first_label = fig.frames[0].name if fig.frames else None
     initial_style = _map_style_for(first_label) if first_label else _DAY_STYLE
