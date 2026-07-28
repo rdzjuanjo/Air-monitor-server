@@ -43,8 +43,12 @@ def _fetch_weekly_range(settings_dict: dict) -> tuple[float, float] | None:
 def _fetch(settings_dict: dict, selected_stations: tuple[str, ...], date_iso: str):
     settings = load_settings()
     sel_date = date.fromisoformat(date_iso)
-    day_start = datetime(sel_date.year, sel_date.month, sel_date.day, tzinfo=_GDL)
-    day_stop = datetime.now(tz=_GDL) if sel_date >= date.today() else day_start + timedelta(hours=24)
+    if sel_date >= date.today():
+        day_stop = datetime.now(tz=_GDL)
+        day_start = day_stop - timedelta(hours=25)
+    else:
+        day_start = datetime(sel_date.year, sel_date.month, sel_date.day, tzinfo=_GDL)
+        day_stop = day_start + timedelta(hours=24)
     window = QueryWindow(
         start=day_start.astimezone(timezone.utc),
         stop=day_stop.astimezone(timezone.utc),
