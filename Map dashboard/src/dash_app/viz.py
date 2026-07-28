@@ -92,6 +92,20 @@ HEATMAP_COLORSCALE = [
     [1.0, "#d73027"],
 ]
 
+_DAY_STYLE = "open-street-map"
+_NIGHT_STYLE = "carto-darkmatter"
+_DAY_START = 7   # 07:00 hora local
+_DAY_END   = 19  # 19:00 hora local
+
+
+def _map_style_for(frame_label: str) -> str:
+    """Devuelve el estilo de mapa según la hora del frame (formato 'YYYY-MM-DD HH:MM TZ')."""
+    try:
+        hour = int(frame_label.split()[1].split(":")[0])
+        return _DAY_STYLE if _DAY_START <= hour < _DAY_END else _NIGHT_STYLE
+    except (IndexError, ValueError):
+        return _DAY_STYLE
+
 
 def build_animated_map(
     df: pd.DataFrame,
@@ -141,10 +155,13 @@ def build_animated_map(
         height=650,
     )
 
+    first_label = fig.frames[0].name if fig.frames else None
+    initial_style = _map_style_for(first_label) if first_label else _DAY_STYLE
+
     fig.update_layout(
         title=None,
         map={
-            "style": "open-street-map",
+            "style": initial_style,
             "center": {"lat": float(center_lat), "lon": float(center_lon)},
             "zoom": float(zoom),
         },
@@ -171,47 +188,49 @@ def build_animated_map(
         slider.update({"x": 0.15, "y": 1.15, "len": 0.85, "xanchor": "left", "yanchor": "top"})
         fig.update_layout(sliders=[slider])
 
-    if show_markers:
-        size_min = 4.0
-        size_range = max(cmax - cmin, 1e-9)
+    size_min = 4.0
+    size_range = max(cmax - cmin, 1e-9)
 
-        def _marker_trace(sub: pd.DataFrame) -> go.Scattermap:
-            normalized = ((sub["value"] - cmin) / size_range).clip(0.0, 1.0)
-            sizes = size_min + normalized * (float(marker_size) - size_min)
-            return go.Scattermap(
-                lat=sub["lat"],
-                lon=sub["lon"],
-                mode="markers+text",
-                marker={
-                    "size": sizes,
-                    "sizemin": size_min,
-                    "opacity": float(marker_opacity),
-                    "color": sub["value"],
-                    "colorscale": HEATMAP_COLORSCALE,
-                    "cmin": cmin,
-                    "cmax": cmax,
-                    "showscale": False,
-                },
-                text=sub["station_id"],
-                textposition="top right",
-                hovertext=[
-                    f"{s}: {v:.1f}%" for s, v in zip(sub["station_id"], sub["value"])
-                ],
-                hoverinfo="text",
-                name="Estaciones",
-            )
+    def _marker_trace(sub: pd.DataFrame) -> go.Scattermap:
+        normalized = ((sub["value"] - cmin) / size_range).clip(0.0, 1.0)
+        sizes = size_min + normalized * (float(marker_size) - size_min)
+        return go.Scattermap(
+            lat=sub["lat"],
+            lon=sub["lon"],
+            mode="markers+text",
+            marker={
+                "size": sizes,
+                "sizemin": size_min,
+                "opacity": float(marker_opacity),
+                "color": sub["value"],
+                "colorscale": HEATMAP_COLORSCALE,
+                "cmin": cmin,
+                "cmax": cmax,
+                "showscale": False,
+            },
+            text=sub["station_id"],
+            textposition="top right",
+            hovertext=[
+                f"{s}: {v:.1f}%" for s, v in zip(sub["station_id"], sub["value"])
+            ],
+            hoverinfo="text",
+            name="Estaciones",
+        )
 
-        groups = {label: sub for label, sub in df.groupby("frame_label")}
+    groups = {label: sub for label, sub in df.groupby("frame_label")} if show_markers else {}
 
-        new_frames = []
-        for frame in fig.frames:
+    new_frames = []
+    for frame in fig.frames:
+        style = _map_style_for(frame.name)
+        frame.layout = {"map": {"style": style}}
+        if show_markers:
             sub = groups.get(frame.name, df.iloc[0:0])
             frame.data = list(frame.data) + [_marker_trace(sub)]
             frame.traces = [0, 1]
-            new_frames.append(frame)
-        fig.frames = new_frames
+        new_frames.append(frame)
+    fig.frames = new_frames
 
-        first_label = fig.frames[0].name if fig.frames else None
+    if show_markers:
         first_sub = groups.get(first_label, df.iloc[0:0])
         fig.add_trace(_marker_trace(first_sub))
 
