@@ -40,7 +40,7 @@ def aggregate_to_frames(df: pd.DataFrame, step_minutes: int, window: QueryWindow
     grouped["frame_label"] = (
         grouped["time_bucket"]
         .dt.tz_convert("America/Mexico_City")
-        .dt.strftime("%Y-%m-%d %H:%M %Z")
+        .dt.strftime("%Y-%m-%d %H:%M CDMX")
     )
 
     coverage = (
