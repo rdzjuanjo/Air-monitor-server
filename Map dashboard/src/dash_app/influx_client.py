@@ -115,13 +115,13 @@ def query_measurements(
     return out.sort_values("timestamp").reset_index(drop=True)
 
 
-def query_weekly_adc_range(settings: Settings) -> tuple[float, float] | None:
-    """Retorna (min_adc, max_adc) de mq135_adc en los últimos 7 días (todos los devices)."""
+def query_weekly_adc_range(settings: Settings) -> dict[str, tuple[float, float]]:
+    """Retorna {device_id: (min_adc, max_adc)} de mq135_adc en los últimos 7 días, por sensor."""
     base = f'''
 from(bucket: "{settings.influx_bucket}")
   |> range(start: -7d)
   |> filter(fn: (r) => r._measurement == "{settings.influx_measurement}" and r._field == "mq135_adc")
-  |> group()
+  |> group(columns: ["{settings.station_tag}"])
 '''
     with InfluxDBClient(
         url=settings.influx_url,
@@ -138,10 +138,17 @@ from(bucket: "{settings.influx_bucket}")
     if isinstance(df_max, list):
         df_max = pd.concat(df_max, ignore_index=True) if df_max else pd.DataFrame()
 
-    if df_min.empty or df_max.empty or "_value" not in df_min or "_value" not in df_max:
-        return None
+    if df_min.empty or df_max.empty or "_value" not in df_min or settings.station_tag not in df_min.columns:
+        return {}
 
-    return float(df_min["_value"].iloc[0]), float(df_max["_value"].iloc[0])
+    result: dict[str, tuple[float, float]] = {}
+    tag = settings.station_tag
+    min_by_device = df_min.set_index(tag)["_value"]
+    max_by_device = df_max.set_index(tag)["_value"]
+    for device_id in min_by_device.index:
+        if device_id in max_by_device.index:
+            result[str(device_id)] = (float(min_by_device[device_id]), float(max_by_device[device_id]))
+    return result
 
 
 def list_stations(settings: Settings, window: QueryWindow) -> list[str]:

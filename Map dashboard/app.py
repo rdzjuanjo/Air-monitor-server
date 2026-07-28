@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+import pandas as pd
 import streamlit as st
 
 from src.dash_app.config import SettingsError, load_settings
@@ -188,10 +189,21 @@ frame_df, _meta = aggregate_to_frames(
     window=selected_window,
 )
 
-adc_range = _fetch_weekly_range(settings.__dict__)
-if not frame_df.empty and adc_range and adc_range[1] > adc_range[0]:
-    adc_min, adc_max = adc_range
-    frame_df["value"] = ((frame_df["value"] - adc_min) / (adc_max - adc_min) * 100).clip(0, 100)
+adc_ranges = _fetch_weekly_range(settings.__dict__)
+if not frame_df.empty and adc_ranges:
+    ranges_df = pd.DataFrame([
+        {"station_id": k, "_adc_min": v[0], "_adc_max": v[1]}
+        for k, v in adc_ranges.items()
+        if v[1] > v[0]
+    ])
+    if not ranges_df.empty:
+        frame_df = frame_df.merge(ranges_df, on="station_id", how="left")
+        mask = frame_df["_adc_min"].notna()
+        frame_df.loc[mask, "value"] = (
+            (frame_df.loc[mask, "value"] - frame_df.loc[mask, "_adc_min"]) /
+            (frame_df.loc[mask, "_adc_max"] - frame_df.loc[mask, "_adc_min"]) * 100
+        ).clip(0, 100)
+        frame_df = frame_df.drop(columns=["_adc_min", "_adc_max"])
 
 if raw_df.empty:
     msg = f"No hay datos para el {selected_date.strftime('%d/%m/%Y')} con los filtros actuales."
