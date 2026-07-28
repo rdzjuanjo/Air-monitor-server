@@ -14,3 +14,16 @@ datasources:
       httpHeaderName1: Authorization
     secureJsonData:
       httpHeaderValue1: Token ${INFLUX_TOKEN}
+
+  - name: InfluxDB (InfluxQL)
+    uid: influxdb-influxql
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    isDefault: false
+    jsonData:
+      version: InfluxQL
+      dbName: ${INFLUX_BUCKET}
+      httpHeaderName1: Authorization
+    secureJsonData:
+      httpHeaderValue1: Token ${INFLUX_TOKEN}
