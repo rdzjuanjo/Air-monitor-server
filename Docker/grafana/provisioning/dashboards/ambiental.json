@@ -1,0 +1,71 @@
+{
+  "title": "Monitoreo ambiental — El Salto",
+  "uid": "ambiental-elsalto",
+  "editable": true,
+  "schemaVersion": 39,
+  "timezone": "browser",
+  "time": { "from": "now-24h", "to": "now" },
+  "refresh": "5m",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Indicador de olor por dispositivo (%)",
+      "type": "timeseries",
+      "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 40 },
+              { "color": "red", "value": 70 }
+            ]
+          },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
+          "query": "weekMin = from(bucket: \"${INFLUX_BUCKET}\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"env_monitoring\" and r._field == \"mq135_adc\")\n  |> group()\n  |> min()\n  |> findRecord(fn: (key) => true, idx: 0)\n\nweekMax = from(bucket: \"${INFLUX_BUCKET}\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"env_monitoring\" and r._field == \"mq135_adc\")\n  |> group()\n  |> max()\n  |> findRecord(fn: (key) => true, idx: 0)\n\nrango = float(v: weekMax._value) - float(v: weekMin._value)\n\nfrom(bucket: \"${INFLUX_BUCKET}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"env_monitoring\" and r._field == \"mq135_adc\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with\n      _value: if rango > 0.0\n        then (float(v: r._value) - float(v: weekMin._value)) / rango * 100.0\n        else 0.0,\n      _field: \"olor_pct\"\n    }))"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Rango ADC semanal por dispositivo (min, max, diferencia)",
+      "type": "timeseries",
+      "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 10 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "influxdb", "uid": "P951FEA4DE68E13C5" },
+          "query": "from(bucket: \"${INFLUX_BUCKET}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"adc_rango\")\n  |> filter(fn: (r) => r._field == \"adc_min\" or r._field == \"adc_max\" or r._field == \"adc_rango\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
+        }
+      ]
+    }
+  ]
+}

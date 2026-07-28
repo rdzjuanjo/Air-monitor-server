@@ -133,7 +133,7 @@ def build_animated_map(
         radius=max(1, int(blur)),
         opacity=float(opacity),
         hover_name="station_id",
-        hover_data={"value": ":.3f", "frame_label": True, "coverage": ":.1f"},
+        hover_data={"value": ":.1f", "frame_label": True, "coverage": ":.1f"},
         animation_frame="frame_label",
         color_continuous_scale=HEATMAP_COLORSCALE,
         range_color=[cmin, cmax],
@@ -195,7 +195,7 @@ def build_animated_map(
                 text=sub["station_id"],
                 textposition="top right",
                 hovertext=[
-                    f"{s}: {v:.3f}" for s, v in zip(sub["station_id"], sub["value"])
+                    f"{s}: {v:.1f}%" for s, v in zip(sub["station_id"], sub["value"])
                 ],
                 hoverinfo="text",
                 name="Estaciones",

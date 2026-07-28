@@ -7,7 +7,7 @@ import streamlit as st
 
 from src.dash_app.config import SettingsError, load_settings
 from src.dash_app.geo_layers import load_cuenca, load_dren_lines, load_industries
-from src.dash_app.influx_client import QueryWindow, query_available_dates, query_measurements
+from src.dash_app.influx_client import QueryWindow, query_available_dates, query_measurements, query_weekly_adc_range
 from src.dash_app.transform import aggregate_to_frames
 from src.dash_app.viz import build_animated_map
 
@@ -19,22 +19,23 @@ st.title("Mapa dinámico de olores")
 _now_cdmx = datetime.now(tz=_GDL)
 st.caption(f"Hora CDMX: {_now_cdmx.strftime('%H:%M')} — {_now_cdmx.strftime('%d/%m/%Y')}")
 
-# Threshold fijo para valores altos (rojo) en el heatmap.
-# CVOL (MQ135) en ppm: <8 buena, 8-16 media, >16 mala (ver mqGetAirQualityLevel
-# en air-monitor/lib/instruments/MQ/MQSensor.h). Con 100 los valores reales
-# (2-30 ppm) quedaban casi todos en el extremo verde del rango de color,
-# por lo que el punto se veia casi invisible/transparente en el mapa.
-HIGH_THRESHOLD_VALUE = 16.0
+# Umbral para valores altos (rojo) en el heatmap, expresado en % de olor (0-100).
+HIGH_THRESHOLD_VALUE = 75.0
 
-# Centro por default: comunidad de El Salto, Jalisco.
-DEFAULT_CENTER_LAT = 20.5181
-DEFAULT_CENTER_LON = -103.1867
-DEFAULT_ZOOM = 11.5
+# Centro por default: punto medio entre El Salto y Juanacatlán, Jalisco.
+DEFAULT_CENTER_LAT = 20.510
+DEFAULT_CENTER_LON = -103.174
+DEFAULT_ZOOM = 13.5
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
 def _fetch_available_dates(settings_dict: dict) -> list:
     return query_available_dates(load_settings())
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def _fetch_weekly_range(settings_dict: dict) -> tuple[float, float] | None:
+    return query_weekly_adc_range(load_settings())
 
 
 @st.cache_data(show_spinner=False, ttl=300)
@@ -96,7 +97,7 @@ high_threshold = st.sidebar.slider(
     max_value=100.0,
     value=HIGH_THRESHOLD_VALUE,
     step=0.5,
-    help="Valor de CVOL (ppm) que se pinta en rojo (extremo de la escala). "
+    help="Porcentaje de olor (0-100%) que se pinta en rojo (extremo de la escala). "
     "Si los valores reales quedan muy por debajo de este numero, los puntos "
     "se ven palidos/transparentes.",
 )
@@ -186,6 +187,11 @@ frame_df, _meta = aggregate_to_frames(
     step_minutes=settings.step_minutes,
     window=selected_window,
 )
+
+adc_range = _fetch_weekly_range(settings.__dict__)
+if not frame_df.empty and adc_range and adc_range[1] > adc_range[0]:
+    adc_min, adc_max = adc_range
+    frame_df["value"] = ((frame_df["value"] - adc_min) / (adc_max - adc_min) * 100).clip(0, 100)
 
 if raw_df.empty:
     msg = f"No hay datos para el {selected_date.strftime('%d/%m/%Y')} con los filtros actuales."

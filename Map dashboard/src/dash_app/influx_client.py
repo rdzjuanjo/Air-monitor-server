@@ -115,6 +115,35 @@ def query_measurements(
     return out.sort_values("timestamp").reset_index(drop=True)
 
 
+def query_weekly_adc_range(settings: Settings) -> tuple[float, float] | None:
+    """Retorna (min_adc, max_adc) de mq135_adc en los últimos 7 días (todos los devices)."""
+    base = f'''
+from(bucket: "{settings.influx_bucket}")
+  |> range(start: -7d)
+  |> filter(fn: (r) => r._measurement == "{settings.influx_measurement}" and r._field == "mq135_adc")
+  |> group()
+'''
+    with InfluxDBClient(
+        url=settings.influx_url,
+        token=settings.influx_token,
+        org=settings.influx_org,
+        timeout=30_000,
+    ) as client:
+        api = client.query_api()
+        df_min = api.query_data_frame(base + "  |> min()")
+        df_max = api.query_data_frame(base + "  |> max()")
+
+    if isinstance(df_min, list):
+        df_min = pd.concat(df_min, ignore_index=True) if df_min else pd.DataFrame()
+    if isinstance(df_max, list):
+        df_max = pd.concat(df_max, ignore_index=True) if df_max else pd.DataFrame()
+
+    if df_min.empty or df_max.empty or "_value" not in df_min or "_value" not in df_max:
+        return None
+
+    return float(df_min["_value"].iloc[0]), float(df_max["_value"].iloc[0])
+
+
 def list_stations(settings: Settings, window: QueryWindow) -> list[str]:
     df = query_measurements(settings=settings, window=window)
     if df.empty:

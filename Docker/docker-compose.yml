@@ -92,7 +92,7 @@ services:
       INFLUX_BUCKET: ${INFLUX_BUCKET}
       INFLUX_MEASUREMENT: env_monitoring
       INFLUX_STATION_TAG: device_id
-      INFLUX_VALUE_FIELD: cvol
+      INFLUX_VALUE_FIELD: mq135_adc
       INFLUX_LAT_FIELD: lat
       INFLUX_LON_FIELD: lon
       DASHBOARD_WINDOW_HOURS: "24"
