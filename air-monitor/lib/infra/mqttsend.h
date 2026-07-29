@@ -242,10 +242,27 @@ void sendMQTTData() {
     return;
   }
 
-  // Remove: #include "mq_remote.h"  — acciones específicas van en mq_init.h
-  // Aplicar ruido aleatorio a coordenadas GPS (±1 metro aproximadamente)
-  lat = nvsGetLatitude()  + (random(-1000, 1000) * 0.000001);
-  lon = nvsGetLongitude() + (random(-1000, 1000) * 0.000001);
+  // Offset diario de coordenadas: mismo valor todo el día, cambia a medianoche UTC.
+  // El número de día UTC se usa como semilla para que el offset sea reproducible
+  // tras un reinicio dentro del mismo día.
+  static float latOffset = 0.0f;
+  static float lonOffset = 0.0f;
+  static uint32_t lastDayNumber = 0;
+
+  const time_t nowT = time(nullptr);
+  if (nowT > 86400L) {  // solo si NTP ya sincronizó
+    const uint32_t todayNumber = (uint32_t)(nowT / 86400L);
+    if (todayNumber != lastDayNumber) {
+      randomSeed(todayNumber);
+      latOffset = random(-1000, 1000) * 0.000001f;
+      lonOffset = random(-1000, 1000) * 0.000001f;
+      lastDayNumber = todayNumber;
+      Serial.printf("Offset diario actualizado: lat%+.6f lon%+.6f\n", latOffset, lonOffset);
+    }
+  }
+
+  lat = nvsGetLatitude()  + latOffset;
+  lon = nvsGetLongitude() + lonOffset;
 
   // Construir mensaje MQTT (métricas provistas por el hook de proyecto)
   String topic = buildTopic();

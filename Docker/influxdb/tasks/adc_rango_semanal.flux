@@ -64,7 +64,7 @@ filas_cvol = all |> map(fn: (r) => {
     rsR0    = if denom > 0.0001 and adcCur > 0.0
                 then ratio * (adcMax / adcCur - 1.0) / denom
                 else 0.0
-    ppm     = if rsR0 > 0.0 then 102.2 * math.pow(x: rsR0, exp: -2.473) else 0.0
+    ppm     = if rsR0 > 0.0 then 102.2 * math.pow(x: rsR0, y: -2.473) else 0.0
     return {_time: now(), _measurement: "adc_rango", device_id: r.device_id, _field: "cvol_srv", _value: ppm}
   })
 
