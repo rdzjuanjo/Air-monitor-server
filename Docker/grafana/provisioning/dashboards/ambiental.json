@@ -69,7 +69,7 @@
             "type": "influxdb",
             "uid": "P951FEA4DE68E13C5"
           },
-          "query": "stats = from(bucket: v.defaultBucket)\n  |> range(start: -8d)\n  |> filter(fn: (r) => r._measurement == \"adc_rango\" and (r._field == \"adc_min\" or r._field == \"adc_max\"))\n  |> group(columns: [\"device_id\", \"_field\"])\n  |> last()\n  |> pivot(rowKey: [\"device_id\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"device_id\", \"adc_min\", \"adc_max\"])\n\ndata = from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"env_monitoring\" and r._field == \"mq135_adc\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> group(columns: [\"device_id\"])\n\njoin(tables: {d: data, s: stats}, on: [\"device_id\"])\n  |> map(fn: (r) => ({r with\n      _value: if r.adc_max > r.adc_min\n        then (float(v: r._value_d) - float(v: r.adc_min)) / (float(v: r.adc_max) - float(v: r.adc_min)) * 100.0\n        else 0.0,\n      _field: \"olor_pct\"\n    }))"
+          "query": "from(bucket: v.defaultBucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"adc_rango\" and r._field == \"olor_pct\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
         }
       ]
     },
