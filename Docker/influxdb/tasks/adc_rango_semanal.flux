@@ -1,11 +1,14 @@
 // Task: adc_rango_semanal
 // Corre cada 20 minutos. Por cada dispositivo calcula el min, max y rango
-// (max - min) de mq135_adc en los últimos 7 días, y el indicador de olor
-// actual (0-100%) normalizado con ese rango. Escribe todo en "adc_rango".
+// semanal de mq135_adc, el indicador de olor (0-100%) y el cvol en ppm
+// usando el mínimo semanal como ADC0 (aire limpio de referencia).
+// Escribe todo en la medición "adc_rango" del mismo bucket.
 //
 // Crear en InfluxDB UI → Tasks → +Create Task, pegar este script y
 // reemplazar "ambiental" y "riosvivos" con los valores reales de
 // INFLUX_BUCKET e INFLUX_ORG del archivo .env.
+
+import "math"
 
 option task = {name: "adc_rango_semanal", every: 20m, offset: 2m}
 
@@ -48,5 +51,22 @@ filas_olor = all |> map(fn: (r) => ({_time: now(), _measurement: "adc_rango", de
       else 0.0
   }))
 
-union(tables: [filas_min, filas_max, filas_rng, filas_olor])
+// cvol en ppm calculado en servidor usando la misma fórmula que el firmware MQ135:
+//   Rs/R0 = ratio * (4095/ADC - 1) / (4095/ADC0 - 1)
+//   ppm   = 102.2 * (Rs/R0) ^ -2.473
+// ADC0 = adc_min semanal (lectura en el aire más limpio de la semana)
+filas_cvol = all |> map(fn: (r) => {
+    adc0    = float(v: r.adc_min)
+    adcCur  = float(v: r.adc_cur)
+    adcMax  = 4095.0
+    ratio   = 3.6
+    denom   = adcMax / adc0 - 1.0
+    rsR0    = if denom > 0.0001 and adcCur > 0.0
+                then ratio * (adcMax / adcCur - 1.0) / denom
+                else 0.0
+    ppm     = if rsR0 > 0.0 then 102.2 * math.pow(x: rsR0, exp: -2.473) else 0.0
+    return {_time: now(), _measurement: "adc_rango", device_id: r.device_id, _field: "cvol_srv", _value: ppm}
+  })
+
+union(tables: [filas_min, filas_max, filas_rng, filas_olor, filas_cvol])
   |> to(bucket: "ambiental", org: "riosvivos")
