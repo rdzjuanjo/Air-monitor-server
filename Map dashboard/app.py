@@ -24,8 +24,8 @@ st.caption(f"Hora CDMX: {_now_cdmx.strftime('%H:%M')} — {_now_cdmx.strftime('%
 HIGH_THRESHOLD_VALUE = 75.0
 
 # Centro por default: punto medio entre El Salto y Juanacatlán, Jalisco.
-DEFAULT_CENTER_LAT = 20.5219
-DEFAULT_CENTER_LON = -103.2245
+DEFAULT_CENTER_LAT = 20.51739
+DEFAULT_CENTER_LON = -103.15711
 DEFAULT_ZOOM = 12.0
 
 
