@@ -156,12 +156,8 @@ if st.sidebar.button("Recargar datos", type="primary"):
 with st.spinner("Consultando InfluxDB..."):
     raw_df, selected_window = _fetch(settings.__dict__, selected_stations, selected_date.isoformat())
 
-if raw_df.empty:
-    default_center_lat = DEFAULT_CENTER_LAT
-    default_center_lon = DEFAULT_CENTER_LON
-else:
-    default_center_lat = float(raw_df["lat"].median())
-    default_center_lon = float(raw_df["lon"].median())
+default_center_lat = DEFAULT_CENTER_LAT
+default_center_lon = DEFAULT_CENTER_LON
 
 if "map_center_lat" not in st.session_state:
     st.session_state.map_center_lat = default_center_lat
