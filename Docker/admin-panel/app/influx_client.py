@@ -33,11 +33,16 @@ def _to_dataframe(data) -> pd.DataFrame:
     return data
 
 
-def get_recent_devices(config, hidden_ids: set[str] | None = None) -> list[dict]:
+def get_recent_devices(
+    config,
+    hidden_ids: set[str] | None = None,
+    only_ids: set[str] | None = None,
+) -> list[dict]:
     """Devuelve un dict por device_id con su ultimo dato reportado (hasta 30 dias).
 
     Incluye un flag 'online' (datos en las ultimas 24h) y ordena los
     dispositivos online primero, offline al final.
+    Si only_ids se especifica, devuelve solo esos device_ids (ignora hidden_ids).
     """
     query = _build_latest_query(config["INFLUX_BUCKET"])
 
@@ -58,7 +63,10 @@ def get_recent_devices(config, hidden_ids: set[str] | None = None) -> list[dict]
 
     devices = []
     for device_id, group in df.groupby("device_id"):
-        if device_id in hidden_ids:
+        if only_ids is not None:
+            if device_id not in only_ids:
+                continue
+        elif device_id in hidden_ids:
             continue
 
         row: dict = {"device_id": device_id, "last_seen": group["_time"].max()}

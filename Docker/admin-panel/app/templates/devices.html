@@ -10,6 +10,23 @@
   </div>
 </header>
 
+{% if hidden_devices %}
+<details class="hidden-section">
+  <summary>Dispositivos ocultos ({{ hidden_devices | length }})</summary>
+  <div class="hidden-list">
+    {% for d in hidden_devices %}
+    <div class="hidden-item">
+      <span class="hidden-id">{{ d.device_id }}</span>
+      <span class="hidden-meta">Ultimo mensaje: {{ d.last_seen.strftime('%Y-%m-%d %H:%M') }} CDMX</span>
+      <form class="inline" method="post" action="{{ url_for('main.show', device_id=d.device_id) }}">
+        <button type="submit">Mostrar</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</details>
+{% endif %}
+
 {% if not devices %}
   <p>No se ha recibido telemetria de ningun dispositivo.</p>
 {% else %}
