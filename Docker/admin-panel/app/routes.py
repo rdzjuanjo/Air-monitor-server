@@ -18,7 +18,7 @@ from flask import (
 from flask_login import login_required, login_user, logout_user
 
 from .auth import User, verify_password
-from .hidden_devices import hide_device, load_hidden_devices
+from .hidden_devices import hide_device, load_hidden_devices, unhide_device
 from .influx_client import get_device_history, get_recent_devices
 from .mqtt_client import publish_remote_action, publish_remote_action_and_wait
 
@@ -89,7 +89,8 @@ def logout():
 def index():
     hidden_ids = load_hidden_devices(current_app.config["HIDDEN_DEVICES_FILE"])
     devices = get_recent_devices(current_app.config, hidden_ids=hidden_ids)
-    return render_template("devices.html", devices=devices)
+    hidden_devices = get_recent_devices(current_app.config, only_ids=hidden_ids) if hidden_ids else []
+    return render_template("devices.html", devices=devices, hidden_devices=hidden_devices)
 
 
 @bp.route("/devices/<device_id>/history")
@@ -105,6 +106,14 @@ def device_history(device_id: str):
 def hide(device_id: str):
     hide_device(current_app.config["HIDDEN_DEVICES_FILE"], device_id)
     flash(f"{device_id} oculto del panel.", "success")
+    return redirect(url_for("main.index"))
+
+
+@bp.route("/devices/<device_id>/show", methods=["POST"])
+@login_required
+def show(device_id: str):
+    unhide_device(current_app.config["HIDDEN_DEVICES_FILE"], device_id)
+    flash(f"{device_id} visible en el panel.", "success")
     return redirect(url_for("main.index"))
 
 

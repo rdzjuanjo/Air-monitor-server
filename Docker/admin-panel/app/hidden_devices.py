@@ -19,3 +19,11 @@ def hide_device(path: str, device_id: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump({"hidden": sorted(hidden)}, f)
+
+
+def unhide_device(path: str, device_id: str) -> None:
+    hidden = load_hidden_devices(path)
+    hidden.discard(device_id)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.safe_dump({"hidden": sorted(hidden)}, f)
