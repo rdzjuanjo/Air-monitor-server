@@ -1,4 +1,4 @@
-# Landing page - ${DOMAIN} / www.${DOMAIN}
+# Redirige ${DOMAIN} / www.${DOMAIN} -> olores.${DOMAIN}
 
 server {
     listen 80;
@@ -18,10 +18,5 @@ server {
     ssl_protocols       TLSv1.2 TLSv1.3;
     ssl_ciphers         HIGH:!aNULL:!MD5;
 
-    root /usr/share/nginx/landing;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ =404;
-    }
+    return 301 https://olores.${DOMAIN}$request_uri;
 }
