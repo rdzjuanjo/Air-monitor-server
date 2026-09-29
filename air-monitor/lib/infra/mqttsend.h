@@ -34,6 +34,11 @@
 #define MQTT_BROKER CFG_TELEMETRY_BROKER
 #define MQTT_PORT   CFG_TELEMETRY_PORT
 
+// Broker secundario opcional (CFG_TELEMETRY_BROKER_SECONDARY == "" lo desactiva).
+// Solo publica telemetría; no se suscribe a comandos remotos.
+#define MQTT_BROKER_SECONDARY CFG_TELEMETRY_BROKER_SECONDARY
+#define MQTT_PORT_SECONDARY   CFG_TELEMETRY_PORT_SECONDARY
+
 // ============================================================================
 // VARIABLES GLOBALES
 // ============================================================================
@@ -42,6 +47,8 @@ extern float lat;
 extern float lon;
 extern WiFiClient espClient;
 extern PubSubClient mqttClient;
+extern WiFiClient espClient2;
+extern PubSubClient mqttClient2;
 extern unsigned long lastMQTTSend;
 extern const unsigned long MQTT_INTERVAL;
 extern bool mqttInitialized;
@@ -53,6 +60,7 @@ extern bool mqttInitialized;
 void setupMQTT();
 void loopMQTT();
 void reconnectMQTT();
+void reconnectMQTTSecondary();
 void sendMQTTData();
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 bool isMQTTConnected();
@@ -68,9 +76,13 @@ float lat;
 float lon;
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
+WiFiClient espClient2;
+PubSubClient mqttClient2(espClient2);
 unsigned long lastMQTTSend = 0;
 const unsigned long MQTT_INTERVAL = CFG_SAMPLING_PUBLISH_INTERVAL_MS;
 bool mqttInitialized = false;
+static unsigned long nextMqttReconnectAttemptMs2 = 0;
+static uint8_t mqttReconnectAttempts2 = 0;
 static bool pendingRemoteActionResponse = false;
 static char pendingRemoteActionTopic[160] = {0};
 static char pendingRemoteActionPayload[512] = {0};
@@ -154,9 +166,18 @@ void setupMQTT() {
   
   // Configurar buffer size a 512 bytes para mensajes más grandes
   mqttClient.setBufferSize(CFG_TELEMETRY_MQTT_PACKET_SIZE);
-  
+
+  if (MQTT_BROKER_SECONDARY[0] != '\0') {
+    mqttClient2.setServer(MQTT_BROKER_SECONDARY, MQTT_PORT_SECONDARY);
+    mqttClient2.setBufferSize(CFG_TELEMETRY_MQTT_PACKET_SIZE);
+    Serial.print("Broker secundario: ");
+    Serial.print(MQTT_BROKER_SECONDARY);
+    Serial.print(":");
+    Serial.println(MQTT_PORT_SECONDARY);
+  }
+
   mqttInitialized = true;
-  
+
   Serial.println("MQTT inicializado");
   Serial.print("Broker: ");
   Serial.print(MQTT_BROKER);
@@ -176,6 +197,14 @@ void loopMQTT() {
     reconnectMQTT();
   }
   mqttClient.loop();  // Procesa mensajes entrantes y mantiene keepalive
+
+  // Broker secundario: solo publica, no se suscribe a comandos
+  if (MQTT_BROKER_SECONDARY[0] != '\0') {
+    if (!mqttClient2.connected()) {
+      reconnectMQTTSecondary();
+    }
+    mqttClient2.loop();
+  }
 
   if (pendingRemoteActionResponse) {
     flushPendingRemoteActionResponse();
@@ -236,6 +265,33 @@ void reconnectMQTT() {
   Serial.println("s");
 }
 
+void reconnectMQTTSecondary() {
+  if (!mqttInitialized || !wifi_connected || MQTT_BROKER_SECONDARY[0] == '\0') return;
+
+  const unsigned long now = millis();
+  if (nextMqttReconnectAttemptMs2 != 0 && now < nextMqttReconnectAttemptMs2) {
+    return;
+  }
+
+  // Generar Client ID único aleatorio (distinto del cliente principal)
+  String clientId = "ESP32Client2-" + String(random(0xffff), HEX);
+
+  // Cliente de solo publicación: sin suscripción a comandos remotos
+  if (mqttClient2.connect(clientId.c_str())) {
+    Serial.print("MQTT secundario conectado: ");
+    Serial.println(MQTT_BROKER_SECONDARY);
+    mqttReconnectAttempts2 = 0;
+    nextMqttReconnectAttemptMs2 = 0;
+    return;
+  }
+
+  mqttReconnectAttempts2++;
+  const unsigned long waitMs = mqttReconnectAttempts2 >= MQTT_RECONNECT_BURST_ATTEMPTS
+      ? MQTT_RECONNECT_BACKOFF_MS
+      : MQTT_RECONNECT_INTERVAL_MS;
+  nextMqttReconnectAttemptMs2 = now + waitMs;
+}
+
 void sendMQTTData() {
   if (!mqttClient.connected()) {
     Serial.println("MQTT no conectado, no se pueden enviar datos");
@@ -280,6 +336,18 @@ void sendMQTTData() {
   } else {
     sysStatusRecordTelemetryDrop();
     Serial.println("Error enviando datos por MQTT");
+  }
+
+  // Espejo al broker secundario (fire-and-forget, no afecta el estado del sistema)
+  if (MQTT_BROKER_SECONDARY[0] != '\0') {
+    if (mqttClient2.connected()) {
+      bool success2 = mqttClient2.publish(topic.c_str(), payload.c_str());
+      Serial.println(success2
+          ? "Datos enviados por MQTT (secundario)"
+          : "Error enviando datos por MQTT (secundario)");
+    } else {
+      Serial.println("MQTT secundario no conectado, se omite envío");
+    }
   }
 }
 

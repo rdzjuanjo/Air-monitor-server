@@ -32,6 +32,20 @@
 /** Puerto del broker MQTT */
 #define CFG_TELEMETRY_PORT                  1883
 
+/**
+ * Broker MQTT secundario (opcional). Si se define no vacío, la telemetría
+ * se publica también ahí (fire-and-forget, sin suscripción a comandos).
+ * Sobreescribible vía build_flags (-D CFG_TELEMETRY_BROKER_SECONDARY=\"...\").
+ */
+#ifndef CFG_TELEMETRY_BROKER_SECONDARY
+#define CFG_TELEMETRY_BROKER_SECONDARY      ""
+#endif
+
+/** Puerto del broker MQTT secundario */
+#ifndef CFG_TELEMETRY_PORT_SECONDARY
+#define CFG_TELEMETRY_PORT_SECONDARY         1883
+#endif
+
 /** Tamaño máximo del buffer MQTT en bytes */
 #define CFG_TELEMETRY_MQTT_PACKET_SIZE      768
 
