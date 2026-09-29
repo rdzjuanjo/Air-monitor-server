@@ -94,7 +94,7 @@
 // ----------------------------------------------------------------------------
 
 /** Versión del firmware (sincronizar con el archivo VERSION) */
-#define CFG_FIRMWARE_VERSION                "1.0.0"
+#define CFG_FIRMWARE_VERSION                "1.0.2"
 
 // ----------------------------------------------------------------------------
 // NTP
