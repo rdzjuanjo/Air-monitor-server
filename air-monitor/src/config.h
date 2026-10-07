@@ -46,6 +46,16 @@
 #define CFG_TELEMETRY_PORT_SECONDARY         1883
 #endif
 
+/**
+ * Prefijo base del topic de telemetría para el broker secundario.
+ * Si está vacío, se usa el mismo CFG_TELEMETRY_TOPIC_BASE que el broker
+ * primario. Sobreescribible vía build_flags
+ * (-D CFG_TELEMETRY_TOPIC_BASE_SECONDARY=\"...\").
+ */
+#ifndef CFG_TELEMETRY_TOPIC_BASE_SECONDARY
+#define CFG_TELEMETRY_TOPIC_BASE_SECONDARY  ""
+#endif
+
 /** Tamaño máximo del buffer MQTT en bytes */
 #define CFG_TELEMETRY_MQTT_PACKET_SIZE      768
 
@@ -94,7 +104,7 @@
 // ----------------------------------------------------------------------------
 
 /** Versión del firmware (sincronizar con el archivo VERSION) */
-#define CFG_FIRMWARE_VERSION                "1.0.2"
+#define CFG_FIRMWARE_VERSION                "1.0.3"
 
 // ----------------------------------------------------------------------------
 // NTP

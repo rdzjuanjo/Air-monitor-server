@@ -341,9 +341,10 @@ void sendMQTTData() {
   // Espejo al broker secundario (fire-and-forget, no afecta el estado del sistema)
   if (MQTT_BROKER_SECONDARY[0] != '\0') {
     if (mqttClient2.connected()) {
-      bool success2 = mqttClient2.publish(topic.c_str(), payload.c_str());
+      String topicSecondary = buildTopicSecondary();
+      bool success2 = mqttClient2.publish(topicSecondary.c_str(), payload.c_str());
       Serial.println(success2
-          ? "Datos enviados por MQTT (secundario)"
+          ? "Datos enviados por MQTT (secundario): " + topicSecondary
           : "Error enviando datos por MQTT (secundario)");
     } else {
       Serial.println("MQTT secundario no conectado, se omite envío");
