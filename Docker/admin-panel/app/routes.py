@@ -97,7 +97,7 @@ def index():
 @login_required
 def device_history(device_id: str):
     if not DEVICE_ID_RE.match(device_id):
-        return jsonify({"timestamps": [], "mq135_adc": [], "mq135_adc0": []}), 404
+        return jsonify({"timestamps": [], "mq135_adc": []}), 404
     return jsonify(get_device_history(current_app.config, device_id))
 
 
@@ -114,27 +114,6 @@ def hide(device_id: str):
 def show(device_id: str):
     unhide_device(current_app.config["HIDDEN_DEVICES_FILE"], device_id)
     flash(f"{device_id} visible en el panel.", "success")
-    return redirect(url_for("main.index"))
-
-
-@bp.route("/devices/<device_id>/calibrate", methods=["POST"])
-@login_required
-def calibrate(device_id: str):
-    raw_value = request.form.get("value", "")
-    try:
-        value = float(raw_value)
-    except ValueError:
-        flash(f"Valor de calibracion invalido: '{raw_value}'.", "error")
-        return redirect(url_for("main.index"))
-
-    publish_remote_action(
-        current_app.config,
-        device_id,
-        action="calibrate_mq135",
-        target="mq135",
-        params={"mode": "manual", "value": value},
-    )
-    flash(f"Comando de calibracion enviado a {device_id}.", "success")
     return redirect(url_for("main.index"))
 
 

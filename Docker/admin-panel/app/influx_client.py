@@ -72,7 +72,7 @@ def get_recent_devices(
         row: dict = {"device_id": device_id, "last_seen": group["_time"].max()}
         for _, record in group.iterrows():
             row[record["_field"]] = record["_value"]
-            for tag in ("fw", "mq135_cal"):
+            for tag in ("fw",):
                 if tag in group.columns and pd.notna(record.get(tag)):
                     row[tag] = record[tag]
 
@@ -93,13 +93,13 @@ from(bucket: "{bucket}")
   |> range(start: {HISTORY_LOOKBACK})
   |> filter(fn: (r) => r._measurement == "env_monitoring")
   |> filter(fn: (r) => r.device_id == "{device_id}")
-  |> filter(fn: (r) => r._field == "mq135_adc" or r._field == "mq135_adc0")
+  |> filter(fn: (r) => r._field == "mq135_adc")
   |> toFloat()
 '''.strip()
 
 
 def get_device_history(config, device_id: str) -> dict:
-    """Devuelve series de mq135_adc y mq135_adc0 de la ultima semana."""
+    """Devuelve la serie de mq135_adc de la ultima semana."""
     query = _build_history_query(config["INFLUX_BUCKET"], device_id)
 
     with InfluxDBClient(
@@ -111,7 +111,7 @@ def get_device_history(config, device_id: str) -> dict:
         data = client.query_api().query_data_frame(query)
 
     df = _to_dataframe(data)
-    empty = {"timestamps": [], "mq135_adc": [], "mq135_adc0": []}
+    empty = {"timestamps": [], "mq135_adc": []}
     if df.empty:
         return empty
 
@@ -124,5 +124,4 @@ def get_device_history(config, device_id: str) -> dict:
     return {
         "timestamps": [t.isoformat() for t in pivot["_time"]],
         "mq135_adc": [None if pd.isna(v) else float(v) for v in pivot.get("mq135_adc", [])],
-        "mq135_adc0": [None if pd.isna(v) else float(v) for v in pivot.get("mq135_adc0", [])],
     }

@@ -61,10 +61,8 @@
     <div class="card-status">
       <div><strong>Ultimo mensaje:</strong> {{ d.last_seen.strftime('%Y-%m-%d %H:%M:%S') }} CDMX</div>
       <div><strong>Firmware:</strong> {{ d.fw if d.fw is defined else "-" }}</div>
-      <div><strong>CVOL:</strong> {{ "%.2f"|format(d.cvol) if d.cvol is defined else "-" }} ppm</div>
       <div><strong>RSSI:</strong> {{ d.rssi | int if d.rssi is defined else "-" }} dBm</div>
       <div><strong>ADC:</strong> {{ d.mq135_adc | int if d.mq135_adc is defined else "-" }}</div>
-      <div><strong>ADC0:</strong> {{ d.mq135_adc0 | int if d.mq135_adc0 is defined else "-" }}</div>
     </div>
 
     {% if d.lat is defined and d.lon is defined %}
@@ -77,11 +75,6 @@
     {% endif %}
 
     <canvas class="card-chart"></canvas>
-
-    <form class="inline" method="post" action="{{ url_for('main.calibrate', device_id=d.device_id) }}">
-      <input type="number" step="any" name="value" placeholder="ADC0" required>
-      <button type="submit" title="Calibrar MQ135 (modo manual)">Actualizar ADC0</button>
-    </form>
   </div>
   {% endfor %}
 </div>
@@ -142,13 +135,6 @@ document.querySelectorAll(".device-card").forEach(function (card) {
                 label: "ADC",
                 data: data.mq135_adc,
                 borderColor: "#38bdf8",
-                tension: 0.2,
-                pointRadius: 0,
-              },
-              {
-                label: "ADC0",
-                data: data.mq135_adc0,
-                borderColor: "#f59e0b",
                 tension: 0.2,
                 pointRadius: 0,
               },
