@@ -19,6 +19,7 @@
  *   GET  /config     → Configuración (WiFi, device ID, coords)
  *   POST /config     → Guarda y reconecta STA  (params POST)
  *   GET  /api/status → JSON con estado completo
+ *   GET  /api/report_odor → Reporte manual de mal olor (publica MQTT inmediato)
  *   GET  /calibrate  → Calibración rápida del sensor
  *   *                → redirect("/")  ← portal cautivo
  */
@@ -85,7 +86,7 @@ const char *getLastMqttInboundCommand();
 unsigned long getLastMqttInboundAtMs();
 int getLastMqttReconnectState();
 unsigned long getLastMqttReconnectAtMs();
-void   sendMQTTData();
+void   sendMQTTData(bool manualOdorReport);
 void   wifiStartSTAConnect();
 
 // ============================================================================
@@ -230,6 +231,28 @@ main{flex:1;max-width:860px;width:100%;margin:0 auto;padding:14px 14px 0}
 .chart-container{height:380px;width:100%;position:relative;margin-top:4px}
 footer{background:#161b22;border-top:1px solid #30363d;padding:10px 16px;font-size:.73rem;color:#7d8590;display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
 footer b{color:#adb5bd}
+
+/* --- Botón principal: reportar mal olor --- */
+.odor-section{display:flex;flex-direction:column;align-items:center;padding:34px 20px 30px}
+.odor-ring{position:relative;width:168px;height:168px;display:flex;align-items:center;justify-content:center}
+.odor-ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:#2ea043;opacity:.25;animation:pulse-ring 2.6s cubic-bezier(.4,0,.6,1) infinite}
+.btn-odor{position:relative;width:148px;height:148px;border-radius:50%;background:linear-gradient(155deg,#34c759 0%,#238a3a 100%);color:#fff;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:inherit;box-shadow:0 10px 22px -4px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.18);transition:transform .22s cubic-bezier(.16,1,.3,1),box-shadow .22s cubic-bezier(.16,1,.3,1),filter .18s ease}
+.btn-odor:hover{transform:scale(1.035);box-shadow:0 14px 26px -4px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.22)}
+.btn-odor:active{transform:scale(.96);box-shadow:0 6px 14px -4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.18)}
+.btn-odor:focus-visible{outline:3px solid #58a6ff;outline-offset:4px}
+.btn-odor:disabled{cursor:default;transform:none;filter:saturate(.7) brightness(.85);box-shadow:0 6px 14px -4px rgba(0,0,0,.4)}
+.btn-odor .emoji{font-size:2.5rem;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+.btn-odor .label{font-size:.9rem;font-weight:700;letter-spacing:.1px}
+.btn-odor .spinner{width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .7s linear infinite}
+.odor-hint{margin-top:16px;color:#7d8590;font-size:.82rem;text-align:center;max-width:280px}
+.msg{margin-top:14px;padding:9px 16px;border-radius:999px;font-size:.82rem;display:none;align-items:center;gap:7px;font-weight:600}
+.msg.ok{background:#0d2d16;color:#3fb950;border:1px solid #1a4a24;display:flex}
+.msg.err{background:#2d1316;color:#f85149;border:1px solid #4a1f22;display:flex}
+.msg svg{width:15px;height:15px;flex:none}
+@keyframes pulse-ring{0%{transform:scale(.86);opacity:.28}70%{transform:scale(1.18);opacity:0}100%{transform:scale(1.18);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.odor-ring::before{animation:none;opacity:0}.btn-odor{transition:none}.btn-odor .spinner{animation-duration:1.4s}}
+@media (max-width:380px){.btn-odor{width:128px;height:128px}.odor-ring{width:144px;height:144px}.btn-odor .emoji{font-size:2.1rem}}
 </style>
 <script src="/chart.umd.js"></script>
 </head>
@@ -239,6 +262,16 @@ footer b{color:#adb5bd}
   <span style="font-size:.75rem;color:#7d8590">Nariz Digital</span>
 </div>
 <main>
+  <div class="card odor-section">
+    <div class="odor-ring">
+      <button id="btnOdor" class="btn-odor" onclick="reportarOlor()" aria-label="Reportar mal olor">
+        <span class="emoji">🤢</span>
+        <span class="label">Huele mal</span>
+      </button>
+    </div>
+    <p class="odor-hint">Presiona si detectas un olor desagradable</p>
+    <div class="msg" id="msgOdor"></div>
+  </div>
   <div class="card">
     <p class="lbl">Concentración de COVs (ppm)</p>
     <div class="big-val" id="ppm">--</div>
@@ -306,6 +339,27 @@ footer b{color:#adb5bd}
     chart.data.datasets[0].data=d.samples.map((s,i)=>({x:s-last,y:d.values[i]}));
     chart.update();
   }
+
+  const ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  const ICON_ERR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+  const IDLE_CONTENT = '<span class="emoji">🤢</span><span class="label">Huele mal</span>';
+
+  function setBtnContent(html){ document.getElementById('btnOdor').innerHTML = html; }
+
+  window.reportarOlor = function(){
+    const btn=document.getElementById('btnOdor'),msg=document.getElementById('msgOdor');
+    btn.disabled=true;
+    setBtnContent('<span class="spinner"></span><span class="label">Enviando…</span>');
+    msg.className='msg';msg.innerHTML='';
+    fetch('/api/report_odor').then(r=>r.json()).then(d=>{
+      if(d.ok){msg.className='msg ok';msg.innerHTML=ICON_OK+'<span>Reporte enviado</span>';}
+      else{msg.className='msg err';msg.innerHTML=ICON_ERR+'<span>'+(d.error||'Error al enviar')+'</span>';}
+      btn.disabled=false;setBtnContent(IDLE_CONTENT);
+    }).catch(()=>{
+      msg.className='msg err';msg.innerHTML=ICON_ERR+'<span>Sin respuesta del dispositivo</span>';
+      btn.disabled=false;setBtnContent(IDLE_CONTENT);
+    });
+  };
 
   function initWS(){
     wsConn=new WebSocket('ws://'+location.hostname+'/ws');
@@ -866,6 +920,20 @@ void setupWeb() {
       return;
     }
     sendMQTTData();
+    DynamicJsonDocument doc(1024);
+    doc["ok"]      = getLastMqttPublishSuccess();
+    doc["topic"]   = getLastMqttPublishTopic();
+    doc["payload"] = getLastMqttPublishPayload();
+    String out; serializeJson(doc, out);
+    req->send(200, "application/json", out);
+  });
+
+  server.on("/api/report_odor", HTTP_GET, [](AsyncWebServerRequest* req){
+    if (!isMQTTConnected()) {
+      req->send(503, "application/json", "{\"ok\":false,\"error\":\"MQTT no conectado\"}");
+      return;
+    }
+    sendMQTTData(true);  // reporte manual de olor — publica de inmediato, fuera del ciclo de 20 min
     DynamicJsonDocument doc(1024);
     doc["ok"]      = getLastMqttPublishSuccess();
     doc["topic"]   = getLastMqttPublishTopic();

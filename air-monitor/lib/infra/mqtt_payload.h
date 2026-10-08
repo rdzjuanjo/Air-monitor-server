@@ -90,7 +90,7 @@ static String buildTopicSecondary() {
   return buildTopicWithBase(base);
 }
 
-static String buildJSONPayload(float longitude, float latitude) {
+static String buildJSONPayload(float longitude, float latitude, bool manualOdorReport = false) {
   DynamicJsonDocument doc(768);
 
   doc["command"] = "telemetry";
@@ -99,6 +99,7 @@ static String buildJSONPayload(float longitude, float latitude) {
   for (uint8_t i = 0; i < sMetricsFillerCount; i++) {
     if (sMetricsFillers[i]) sMetricsFillers[i](metrics);
   }
+  metrics["olor"] = manualOdorReport;  // true solo en el reporte manual disparado desde la web
 
   JsonObject metadata = doc.createNestedObject("metadata");
   metadata["coord_x"] = longitude;

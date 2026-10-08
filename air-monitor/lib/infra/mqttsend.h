@@ -61,7 +61,7 @@ void setupMQTT();
 void loopMQTT();
 void reconnectMQTT();
 void reconnectMQTTSecondary();
-void sendMQTTData();
+void sendMQTTData(bool manualOdorReport = false);
 void mqttCallback(char* topic, byte* payload, unsigned int length);
 bool isMQTTConnected();
 String getMQTTStatus();
@@ -292,7 +292,7 @@ void reconnectMQTTSecondary() {
   nextMqttReconnectAttemptMs2 = now + waitMs;
 }
 
-void sendMQTTData() {
+void sendMQTTData(bool manualOdorReport) {
   if (!mqttClient.connected()) {
     Serial.println("MQTT no conectado, no se pueden enviar datos");
     return;
