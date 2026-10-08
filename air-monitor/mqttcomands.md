@@ -33,7 +33,6 @@ También se publica de inmediato (fuera de este ciclo) cuando el usuario presion
 {
   "command": "telemetry",
   "metrics": {
-    "CVOL": 452.3,
     "mq135_adc": 1826,
     "olor": false
   },
@@ -47,10 +46,7 @@ También se publica de inmediato (fuera de este ciclo) cuando el usuario presion
         "mqtt": true,
         "rssi": -68
       },
-      "instruments": {
-        "mq135_cal": true,
-        "mq135_adc0": 2000
-      }
+      "instruments": {}
     }
   }
 }
@@ -59,8 +55,7 @@ También se publica de inmediato (fuera de este ciclo) cuando el usuario presion
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `command` | string | Siempre `"telemetry"` |
-| `metrics.CVOL` | float | Concentración de COVs en ppm (sensor `mq135`) |
-| `metrics.mq135_adc` | int | Valor ADC filtrado (EMA) del sensor `mq135` |
+| `metrics.mq135_adc` | int | Valor ADC filtrado (EMA) del sensor `mq135` — sin calibración, valor crudo |
 | `metrics.olor` | bool | `true` solo en el reporte manual disparado por el botón "Huele mal"; `false` en los envíos periódicos |
 | `metadata.coord_x` | float | Longitud GPS (con ruido aleatorio ±~1 m) |
 | `metadata.coord_y` | float | Latitud GPS (con ruido aleatorio ±~1 m) |
@@ -68,10 +63,8 @@ También se publica de inmediato (fuera de este ciclo) cuando el usuario presion
 | `metadata.device.wifi.up` | bool | Conectado a la red WiFi (STA) |
 | `metadata.device.wifi.mqtt` | bool | Conectado al broker MQTT |
 | `metadata.device.wifi.rssi` | int | Señal WiFi en dBm (solo si `wifi.up`) |
-| `metadata.device.instruments.mq135_cal` | bool | Sensor `mq135` calibrado |
-| `metadata.device.instruments.mq135_adc0` | int | Valor ADC0 de calibración del `mq135` |
 
-`metrics` y `metadata.device.instruments` se construyen dinámicamente: cada instrumento registrado (p. ej. `MQInstrument mq135`) agrega sus propios campos con prefijo `<id>_`.
+`metrics` se construye dinámicamente: cada instrumento registrado (p. ej. `MQInstrument mq135`) agrega sus propios campos con prefijo `<id>_`. El sensor `mq135` ya no tiene concepto de calibración, por lo que `metadata.device.instruments` queda vacío.
 
 ---
 
@@ -83,12 +76,10 @@ Se publica **en el mismo topic** del que llegó el comando.
 ```json
 {
   "command": "remote_action_result",
-  "action": "calibrate_mq135",
+  "action": "set_coordinates",
   "actionId": "abc-123",
-  "target": "mq135",
   "ok": true,
-  "status": "success",
-  "detail": "ADC0=2000 guardado"
+  "status": "success"
 }
 ```
 
@@ -125,30 +116,6 @@ Ejecuta una acción en el dispositivo. El resultado llega como [`remote_action_r
 `actionId` y `target` son opcionales y solo se reenvían en la respuesta para correlación; el firmware no los valida.
 
 #### Acciones disponibles
-
-##### `calibrate_mq135` — Calibrar el sensor MQ135
-
-```json
-{
-  "command": "remote_action",
-  "action": "calibrate_mq135",
-  "actionId": "cal-mq135-001",
-  "target": "mq135",
-  "params": {
-    "mode": "manual",
-    "value": 2000
-  }
-}
-```
-
-| Parámetro | Tipo | Descripción |
-|---|---|---|
-| `params.mode` | string | Debe ser `"manual"` (cualquier otro valor es rechazado) |
-| `params.value` | float | Valor ADC0 en aire limpio |
-
-El nombre de la acción es `calibrate_<id>`, donde `<id>` es el identificador del instrumento (`"mq135"` en este proyecto). Si se añade otro sensor MQ, se registra automáticamente su propia acción `calibrate_<id>`.
-
----
 
 ##### `set_coordinates` — Actualizar coordenadas GPS
 
@@ -214,7 +181,6 @@ Sin parámetros. El dispositivo envía el `remote_action_result` confirmando (`d
 |---|---|---|
 | ↑ salida | `telemetry` | `riosvivos/monitoring/{device_id}` |
 | ↑ salida | `remote_action_result` | topic del comando recibido |
-| ↓ entrada | `remote_action` → `calibrate_mq135` | `riosvivos/monitoring/{device_id}` |
 | ↓ entrada | `remote_action` → `set_coordinates` | `riosvivos/monitoring/{device_id}` |
 | ↓ entrada | `remote_action` → `setDeviceId` | `riosvivos/monitoring/{device_id}` |
 | ↓ entrada | `remote_action` → `reboot` | `riosvivos/monitoring/{device_id}` |

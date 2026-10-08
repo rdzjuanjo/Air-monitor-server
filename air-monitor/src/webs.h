@@ -20,7 +20,6 @@
  *   POST /config     → Guarda y reconecta STA  (params POST)
  *   GET  /api/status → JSON con estado completo
  *   GET  /api/report_odor → Reporte manual de mal olor (publica MQTT inmediato)
- *   GET  /calibrate  → Calibración rápida del sensor
  *   *                → redirect("/")  ← portal cautivo
  */
 
@@ -114,25 +113,17 @@ static const    int HISTORY_SIZE  = 72;
 inline void registerHistoryHooks() {
   mqttPayloadAddMetricsFiller([](JsonObject&) {
     sampleHistory[historyIndex] = sampleCounter++;
-    sensorHistory[historyIndex] = mq135.getReading();
+    sensorHistory[historyIndex] = mq135.getFilteredADC();
     if (++historyIndex >= HISTORY_SIZE) { historyIndex = 0; historyInitialized = true; }
   });
 }
 String buildStatusJson() {
-  float ppm = mq135.getReading();
   DynamicJsonDocument doc(1024);
   doc["device_id"]    = config.device_id;
   doc["ap_prefix"]    = getApNamePrefix();
   doc["mdns_hostname"]= config.mdnsHostname;
   doc["wifi_ssid"]    = config.wifi_ssid;
-  doc["sensor_value"] = ppm;
-  doc["air_quality"]  = mqGetAirQualityLevel(ppm);
-  doc["calibrated"]   = mq135.isCalibrated();
-  doc["calibration_adc0"] = mq135.getCalibrationValue();
   doc["adc_current"]      = mq135.getFilteredADC();
-  doc["calibration_status"] = mq135.isCalibrated()
-      ? String("MQ: ADC0=") + String(mq135.getCalibrationValue(), 0)
-      : String("MQ: sin calibracion guardada");
   doc["latitude"]     = config.latitude;
   doc["longitude"]    = config.longitude;
   doc["wifi_ip"]      = wifi_connected ? WiFi.localIP().toString() : String("");
@@ -158,15 +149,11 @@ String buildStatusJson() {
 }
 
 String buildWsStatusJson() {
-  float ppm = mq135.getReading();
   DynamicJsonDocument doc(1024);
   doc["type"]         = "status";
-  doc["sensor_value"] = ppm;
-  doc["air_quality"]  = mqGetAirQualityLevel(ppm);
   doc["device_id"]    = config.device_id;
   doc["location"]     = String(config.latitude, 5) + ", " + String(config.longitude, 5);
   doc["adc_current"]       = mq135.getFilteredADC();
-  doc["calibration_adc0"]  = mq135.getCalibrationValue();
   doc["wifi_connected"]    = wifi_connected;
   doc["wifi_ssid"]         = wifi_connected ? String(WiFi.SSID()) : String(config.wifi_ssid);
   doc["mqtt_status"] = getMQTTStatus();
@@ -223,11 +210,6 @@ main{flex:1;max-width:860px;width:100%;margin:0 auto;padding:14px 14px 0}
 .card{background:#161b22;border-radius:10px;padding:20px;margin-bottom:14px;border:1px solid #30363d}
 .big-val{font-size:4rem;font-weight:700;text-align:center;letter-spacing:-2px;transition:color .4s;font-family:monospace}
 .lbl{text-align:center;color:#7d8590;font-size:.82rem;margin-bottom:4px}
-.quality{text-align:center;margin-top:8px}
-.quality span{display:inline-block;padding:5px 18px;border-radius:20px;font-weight:600;font-size:.9rem}
-.q-alta span{background:#1a3a1a;color:#3fb950;border:1px solid #3fb950}
-.q-medio span{background:#3d2e00;color:#d29922;border:1px solid #d29922}
-.q-baja span{background:#2d1a1a;color:#f85149;border:1px solid #f85149}
 .chart-container{height:380px;width:100%;position:relative;margin-top:4px}
 footer{background:#161b22;border-top:1px solid #30363d;padding:10px 16px;font-size:.73rem;color:#7d8590;display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
 footer b{color:#adb5bd}
@@ -273,9 +255,8 @@ footer b{color:#adb5bd}
     <div class="msg" id="msgOdor"></div>
   </div>
   <div class="card">
-    <p class="lbl">Concentración de COVs (ppm)</p>
+    <p class="lbl">Valor crudo del sensor (ADC)</p>
     <div class="big-val" id="ppm">--</div>
-    <div class="quality" id="qual"><span>—</span></div>
   </div>
   <div class="chart-container">
     <canvas id="chart"></canvas>
@@ -286,7 +267,6 @@ footer b{color:#adb5bd}
   <span>WiFi: <b id="footWifi">--</b></span>
   <span>Red: <b id="footSsid">--</b></span>
   <span>ADC: <b id="devAdc">--</b></span>
-  <span>ADC0: <b id="devAdc0">--</b></span>
 </footer>
 <script>
 (function(){
@@ -302,35 +282,28 @@ footer b{color:#adb5bd}
   if(typeof Chart!=='undefined'){
     try{
       const ctx=document.getElementById('chart').getContext('2d');
-      chart=new Chart(ctx,{type:'line',data:{datasets:[{label:'COVs (ppm)',data:[],
+      chart=new Chart(ctx,{type:'line',data:{datasets:[{label:'ADC crudo',data:[],
         borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,.1)',fill:true,tension:.4,
         pointRadius:3,pointHoverRadius:6}]},options:{responsive:true,maintainAspectRatio:false,
         scales:{x:{
           type:'linear',min:-(HISTORY_SIZE-1),max:0,
           grid:{color:'#21262d'},ticks:{color:'#7d8590',maxTicksLimit:8,
             callback:v=>stepLabel(v)}},
-          y:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#7d8590',callback:v=>v+' ppm'}}},
+          y:{beginAtZero:true,grid:{color:'#21262d'},ticks:{color:'#7d8590'}}},
         plugins:{legend:{display:false},
-          tooltip:{callbacks:{title:i=>{const v=i[0].parsed.x;return v===0?'Ahora':'Hace '+stepLabel(-v,true);},label:c=>c.parsed.y.toFixed(2)+' ppm'}}}}});
+          tooltip:{callbacks:{title:i=>{const v=i[0].parsed.x;return v===0?'Ahora':'Hace '+stepLabel(-v,true);},label:c=>c.parsed.y.toFixed(0)+' ADC'}}}}});
     }catch(_){}
   }
 
-  const qMap={'Alta':{c:'q-alta',l:'BAJO'},'MEDIO':{c:'q-medio',l:'MODERADO'},'Baja':{c:'q-baja',l:'ALTO'}};
   let wsConn,retry=2000;
 
   function updateUI(d){
-    const ppm=parseFloat(d.sensor_value);
-    document.getElementById('ppm').textContent=isNaN(ppm)?'--':ppm.toFixed(2);
+    const adc=parseFloat(d.adc_current);
+    document.getElementById('ppm').textContent=isNaN(adc)?'--':Math.round(adc);
     document.getElementById('devAdc').textContent=d.adc_current!=null?Math.round(d.adc_current):'--';
-    document.getElementById('devAdc0').textContent=d.calibration_adc0!=null?Math.round(d.calibration_adc0):'--';
     document.getElementById('footDevId').textContent=d.device_id||'--';
     document.getElementById('footWifi').textContent=d.wifi_connected?'Conectado':'Desconectado';
     document.getElementById('footSsid').textContent=d.wifi_ssid||'--';
-    const q=qMap[d.air_quality]||{c:'q-medio',l:d.air_quality||'—'};
-    const qd=document.getElementById('qual');
-    qd.className='quality '+q.c;qd.querySelector('span').textContent=q.l;
-    const cols={'q-alta':'#3fb950','q-medio':'#d29922','q-baja':'#f85149'};
-    document.getElementById('ppm').style.color=cols[q.c]||'#e6edf3';
   }
 
   function loadHistory(d){
@@ -639,14 +612,6 @@ button:disabled{opacity:.35;cursor:default}
     <p class="hint">Nombre local del dispositivo en la red. Disponible como <b>[hostname].local</b>.</p>
   </div>
   <div class="card">
-    <h2>Calibración ADC0</h2>
-    <label>Valor ADC0 (calibración MQ)</label>
-    <input type="text" id="adc0" inputmode="decimal" placeholder="2000">
-    <p class="hint">Valor de referencia ADC en aire limpio. Se usa para calcular la concentración de COVs.</p>
-    <button id="btnCal" onclick="calibrar()">Calibrar ahora (20 lecturas)</button>
-    <div class="msg" id="msgCal"></div>
-  </div>
-  <div class="card">
     <button id="btnSave" onclick="guardar()">Guardar ajustes avanzados</button>
     <div class="msg" id="msg"></div>
   </div>
@@ -657,7 +622,6 @@ button:disabled{opacity:.35;cursor:default}
       <span>MQTT: <b id="mqttState">--</b></span>
       <span>RSSI: <b id="wifiRssi">--</b></span>
       <span>Clientes AP: <b id="apClients">--</b></span>
-      <span>Calibración: <b id="calState">--</b></span>
     </div>
     <div class="diag" id="mqttDiag">Cargando diagnóstico…</div>
     <button id="btnMqttTest" onclick="enviarMqttTest()">Enviar payload MQTT de prueba</button>
@@ -671,8 +635,7 @@ function fmtUp(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
 fetch('/api/status').then(r=>r.json()).then(d=>{
   const items=[
     ['Dispositivo',d.device_id||'—'],['IP STA',d.wifi_ip||'Sin conexión'],
-    ['IP AP','192.168.4.1'],['Sensor',(parseFloat(d.sensor_value)||0).toFixed(2)+' ppm'],
-    ['Calibrado',d.calibrated?'Sí':'No'],['ADC0',(parseFloat(d.calibration_adc0)||0).toFixed(0)],
+    ['IP AP','192.168.4.1'],['ADC',(parseFloat(d.adc_current)||0).toFixed(0)],
     ['AP Prefix',d.ap_prefix||'Nariz Digital-'],['mDNS',(d.mdns_hostname||'aire')+'.local'],
     ['Uptime',fmtUp(d.uptime||0)]];
   document.getElementById('grid').innerHTML=items.map(([k,v])=>
@@ -680,29 +643,15 @@ fetch('/api/status').then(r=>r.json()).then(d=>{
   document.getElementById('devid').value=d.device_id||'';
   document.getElementById('apprefix').value=d.ap_prefix||'Nariz Digital-';
   document.getElementById('mdns').value=d.mdns_hostname||'aire';
-  document.getElementById('adc0').value=d.calibration_adc0||'';
   document.getElementById('fwVer').textContent=d.firmware_version||'--';
   document.getElementById('mqttState').textContent=d.mqtt_status||((d.mqtt!==undefined)?(d.mqtt?'Conectado':'Desconectado'):'--');
   document.getElementById('wifiRssi').textContent=(d.wifi_rssi!==undefined&&d.wifi_rssi!==null)?d.wifi_rssi+' dBm':'--';
   document.getElementById('apClients').textContent=(d.ap_clients!==undefined)?d.ap_clients:'--';
-  document.getElementById('calState').textContent=d.calibration_status||(d.calibrated?'Calibrado':'Sin calibrar');
   const lastPublish=d.mqtt_last_publish_topic?`Último publish: ${d.mqtt_last_publish_topic}\nEstado: ${d.mqtt_last_publish_ok?'OK':'FALLÓ'}\nPayload: ${d.mqtt_last_publish_payload||'--'}`:'Último publish: --';
   const lastInbound=d.mqtt_last_inbound_topic?`Último comando: ${d.mqtt_last_inbound_command||'--'}\nTopic: ${d.mqtt_last_inbound_topic}\nPayload: ${d.mqtt_last_inbound_payload||'--'}`:'Último comando: --';
   const reconnect=`Reconexión MQTT: ${d.mqtt_last_reconnect_state!==undefined?d.mqtt_last_reconnect_state:'--'}\nEstado textual: ${d.mqtt_status||'--'}`;
   document.getElementById('mqttDiag').textContent=`${lastPublish}\n\n${lastInbound}\n\n${reconnect}`;
 }).catch(()=>{});
-
-function calibrar(){
-  const btn=document.getElementById('btnCal'),msg=document.getElementById('msgCal');
-  btn.disabled=true;btn.textContent='Calibrando (10s)…';msg.className='msg';
-  fetch('/calibrate').then(r=>r.json()).then(d=>{
-    if(d.ok){msg.className='msg ok';msg.textContent='✓ Calibrado OK – ADC0: '+d.adc0;
-      document.getElementById('adc0').value=d.adc0;}
-    else{msg.className='msg err';msg.textContent='✗ '+(d.error||'Error');}
-    btn.disabled=false;btn.textContent='Calibrar ahora (20 lecturas)';
-  }).catch(()=>{msg.className='msg err';msg.textContent='✗ Sin respuesta';
-    btn.disabled=false;btn.textContent='Calibrar ahora (20 lecturas)';});
-}
 
 function enviarMqttTest(){
   const btn=document.getElementById('btnMqttTest'),msg=document.getElementById('msgMqttTest');
@@ -721,8 +670,7 @@ function guardar(){
   const p=new URLSearchParams({
     devid:document.getElementById('devid').value.trim(),
     apprefix:document.getElementById('apprefix').value.trim(),
-    mdns:document.getElementById('mdns').value.trim(),
-    adc0:document.getElementById('adc0').value.trim()});
+    mdns:document.getElementById('mdns').value.trim()});
   fetch('/config',{method:'POST',body:p,headers:{'Content-Type':'application/x-www-form-urlencoded'}})
     .then(r=>r.json())
     .then(d=>{
@@ -815,7 +763,6 @@ void setupWeb() {
     String apprefix = postParam("apprefix");
     String lat   = postParam("lat");
     String lng   = postParam("lng");
-    String adc0  = postParam("adc0");
     String mdns  = postParam("mdns");
 
     if (ssid.length()  > 0) { setWiFiCredentials(ssid.c_str(), pass.c_str(), false); changed = true; }
@@ -829,12 +776,6 @@ void setupWeb() {
     if (lng.length() > 0) {
       float v = lng.toFloat();
       if (v >= -180 && v <= 180) { config.longitude = v; changed = true; }
-    }
-    if (adc0.length() > 0) {
-      float v = adc0.toFloat();
-      if (mq135.calibrate(v)) {
-        changed = true;
-      }
     }
     if (mdns.length() > 0 && mdns.length() < 32) {
       mdns.toCharArray(config.mdnsHostname, sizeof(config.mdnsHostname));
@@ -891,27 +832,6 @@ void setupWeb() {
     } else {
       req->send(200, "application/json", "{\"scanning\":false,\"networks\":[]}");
     }
-  });
-
-  server.on("/calibrate", HTTP_GET, [](AsyncWebServerRequest* req){
-    if (!mq135.isInitialized()) {
-      req->send(503, "application/json",
-                "{\"ok\":false,\"error\":\"Sensor no inicializado\"}");
-      return;
-    }
-    float sum = 0;
-    for (int i = 0; i < 20; i++) { sum += (float)analogRead(34); delay(500); }
-    float adc0 = sum / 20.0f;
-    if (adc0 < 100 || adc0 > 4000) {
-      req->send(400, "application/json",
-                "{\"ok\":false,\"error\":\"ADC0 fuera de rango\",\"adc0\":" + String(adc0,0) + "}");
-      return;
-    }
-    mq135.calibrate(adc0);
-    saveConfig();
-    req->send(200, "application/json",
-              "{\"ok\":true,\"adc0\":" + String(adc0,0) + "}");
-    Serial.printf("Calibración via web OK – ADC0=%.0f\n", adc0);
   });
 
   server.on("/api/send_mqtt", HTTP_GET, [](AsyncWebServerRequest* req){

@@ -72,7 +72,7 @@ inline void libSetup(SensorSetupFn sensorInit) {
   Serial.println(F("\n╔══════════════════════════════════════════════╗"));
   Serial.println(F("║   Sistema inicializado                       ║"));
   Serial.println(F("╚══════════════════════════════════════════════╝"));
-  Serial.println("Comandos: help | status | calibrate | read | autocal | config | resetwifi\n");
+  Serial.println("Comandos: help | status | read | config | resetwifi\n");
 }
 
 // ============================================================================

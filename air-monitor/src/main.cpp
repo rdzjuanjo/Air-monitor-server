@@ -2,7 +2,7 @@
  * Sistema de Monitoreo de Calidad del Aire – AirQ
  *
  * Sensor registrado:
- *  - mq135  pin 34  → métrica "CVOL" (COVs)
+ *  - mq135  pin 34  → reporta mq135_adc (ADC crudo filtrado, sin calibración)
  */
 
 #include <Arduino.h>
@@ -16,7 +16,7 @@
 // Servidor web
 #include "webs.h"
 
-MQInstrument mq135(34, "mq135", "CVOL");
+MQInstrument mq135(34, "mq135");
 
 bool webServerStarted = false;  ///< Consumido vía extern en system.h y webs.h
 
@@ -38,7 +38,7 @@ void setup() {
 }
 
 void loop() {
-  mq135.update();  // EMA + auto-calibración (guarda NVS si auto-cal se aplica)
+  mq135.update();  // EMA del ADC crudo
   loopWeb();
   libLoop();
   delay(10);
