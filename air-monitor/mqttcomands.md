@@ -27,12 +27,15 @@ monitoreo/{device_id}
 
 Publicado automáticamente cada **20 minutos** (`CFG_SAMPLING_PUBLISH_INTERVAL_MS`) mientras hay conexión MQTT activa. Si no hay conexión, simplemente no se envía (no hay cola/almacenamiento offline).
 
+También se publica de inmediato (fuera de este ciclo) cuando el usuario presiona el botón **"Huele mal"** en la página principal del webserver (`GET /api/report_odor`) — en ese caso `metrics.olor` llega en `true`; en los envíos periódicos normales siempre es `false`.
+
 ```json
 {
   "command": "telemetry",
   "metrics": {
     "CVOL": 452.3,
-    "mq135_adc": 1826
+    "mq135_adc": 1826,
+    "olor": false
   },
   "metadata": {
     "coord_x": -103.2000,
@@ -58,6 +61,7 @@ Publicado automáticamente cada **20 minutos** (`CFG_SAMPLING_PUBLISH_INTERVAL_M
 | `command` | string | Siempre `"telemetry"` |
 | `metrics.CVOL` | float | Concentración de COVs en ppm (sensor `mq135`) |
 | `metrics.mq135_adc` | int | Valor ADC filtrado (EMA) del sensor `mq135` |
+| `metrics.olor` | bool | `true` solo en el reporte manual disparado por el botón "Huele mal"; `false` en los envíos periódicos |
 | `metadata.coord_x` | float | Longitud GPS (con ruido aleatorio ±~1 m) |
 | `metadata.coord_y` | float | Latitud GPS (con ruido aleatorio ±~1 m) |
 | `metadata.device.fw` | string | Versión del firmware |
