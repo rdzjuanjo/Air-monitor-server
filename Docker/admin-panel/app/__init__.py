@@ -20,6 +20,7 @@ def create_app() -> Flask:
     app.config["USERS_FILE"] = os.environ.get("USERS_FILE", "/app/users.yaml")
     app.config["OTA_DIR"] = os.environ.get("OTA_DIR", "/app/ota")
     app.config["OTA_BASE_URL"] = os.environ.get("OTA_BASE_URL", "")
+    app.config["OTA_BIN_BASE_URL"] = os.environ.get("OTA_BIN_BASE_URL", "")
     app.config["HIDDEN_DEVICES_FILE"] = os.environ.get(
         "HIDDEN_DEVICES_FILE", "/app/data/hidden_devices.yaml"
     )

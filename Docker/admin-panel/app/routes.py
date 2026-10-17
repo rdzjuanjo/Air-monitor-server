@@ -37,7 +37,9 @@ def _ota_paths(config):
 
 
 def _ota_bin_url(config):
-    return f"{config['OTA_BASE_URL']}/{OTA_BIN_FILENAME}"
+    # OTA_BIN_BASE_URL permite servir el .bin por HTTP plano (ver ota.conf.template)
+    base = config.get("OTA_BIN_BASE_URL") or config["OTA_BASE_URL"]
+    return f"{base}/{OTA_BIN_FILENAME}"
 
 
 def _load_ota_manifest(config):

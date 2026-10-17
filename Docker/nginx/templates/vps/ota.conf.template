@@ -5,6 +5,13 @@ server {
     listen [::]:80;
     server_name ota.${DOMAIN};
 
+    # Binarios por HTTP plano: el firmware 1.0.0 desborda el stack al hacer el
+    # segundo handshake TLS para descargar el .bin (ESP32OTAPull::DoOTAUpdate).
+    # El manifiesto .json sigue sirviéndose solo por HTTPS.
+    location ~ ^/[^/]+\.bin$ {
+        root /usr/share/nginx/ota;
+    }
+
     include /etc/nginx/snippets/acme-redirect.conf;
 }
 

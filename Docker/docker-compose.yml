@@ -117,6 +117,7 @@ services:
       SECRET_KEY: ${ADMIN_SECRET_KEY}
       OTA_DIR: /app/ota
       OTA_BASE_URL: ${OTA_BASE_URL}
+      OTA_BIN_BASE_URL: ${OTA_BIN_BASE_URL:-}
     volumes:
       - ./admin-panel/users.yaml:/app/users.yaml:ro
       - ota_files:/app/ota
