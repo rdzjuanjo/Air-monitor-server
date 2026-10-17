@@ -4,3 +4,4 @@ CLAUDE.md
 .vscode/
 MapaAhogado/
 Docker/mapa/*.html
+__pycache__/
