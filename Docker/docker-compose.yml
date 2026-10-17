@@ -127,6 +127,25 @@ services:
     networks:
       - backend
 
+  # Reenvía a mqtt.riosvivos.org la telemetría de estaciones con firmware
+  # anterior a 1.0.3 (que no publican ellas mismas en el broker secundario)
+  mqtt-bridge:
+    build:
+      context: ./mqtt-bridge
+    restart: unless-stopped
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      MQTT_TOPIC_BASE: monitoreo
+      BRIDGE_REMOTE_HOST: mqtt.riosvivos.org
+      BRIDGE_REMOTE_PORT: "1883"
+      BRIDGE_REMOTE_TOPIC_BASE: riosvivos/monitoring
+      BRIDGE_FW_VERSIONS: "1.0.0"
+    depends_on:
+      - mosquitto
+    networks:
+      - backend
+
   nginx:
     image: nginx:alpine
     restart: unless-stopped
