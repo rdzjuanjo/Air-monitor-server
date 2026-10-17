@@ -73,10 +73,21 @@ static void fillDeviceMetadata(JsonObject metadata) {
 // Topic y payload de telemetría
 // ---------------------------------------------------------------------------
 
-static String buildTopic() {
-  String topic = CFG_TELEMETRY_TOPIC_BASE;
+static String buildTopicWithBase(const char *topicBase) {
+  String topic = topicBase;
   topic += nvsGetDeviceId();
   return topic;
+}
+
+static String buildTopic() {
+  return buildTopicWithBase(CFG_TELEMETRY_TOPIC_BASE);
+}
+
+static String buildTopicSecondary() {
+  const char *base = (CFG_TELEMETRY_TOPIC_BASE_SECONDARY[0] != '\0')
+      ? CFG_TELEMETRY_TOPIC_BASE_SECONDARY
+      : CFG_TELEMETRY_TOPIC_BASE;
+  return buildTopicWithBase(base);
 }
 
 static String buildJSONPayload(float longitude, float latitude) {

@@ -6,6 +6,9 @@
 #include <ESP32OTAPull.h>
 #include <esp_system.h>
 #include <cstring>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
 
 #include "system_status.h"
 #include "NvsConfig.h"
@@ -86,6 +89,7 @@ inline const char *getFirmwareVersion() {
 const char* errtext(int code);
 const char* resetReasonName(esp_reset_reason_t reason);
 int checkOTAUpdateEx(const OtaConfig &config);
+int checkOTAUpdateInTask(const OtaConfig &config);
 void checkOTAUpdate(const OtaConfig &config);
 void checkOTAUpdate();
 void registerOtaRemoteAction();
@@ -281,6 +285,63 @@ int checkOTAUpdateEx(const OtaConfig &config) {
   return ret;
 }
 
+/**
+ * @brief Tamaño de stack dedicado al task de verificación OTA.
+ *
+ * El handshake TLS (verificación ECDSA del certificado del servidor,
+ * vía mbedtls) consume mucho más stack que el default de 8KB del
+ * `loopTask` de Arduino — de ahí el panic por stack canary al correr
+ * checkOTAUpdateEx() directo dentro del callback MQTT. Ver memoria de
+ * la estación 59FC3F.
+ */
+static constexpr uint32_t OTA_TASK_STACK_SIZE = 16384;
+
+struct OtaTaskContext {
+  OtaConfig config;
+  int result;
+  SemaphoreHandle_t done;
+};
+
+static void otaTaskEntry(void *param) {
+  OtaTaskContext *ctx = static_cast<OtaTaskContext *>(param);
+  ctx->result = checkOTAUpdateEx(ctx->config);
+  xSemaphoreGive(ctx->done);
+  vTaskDelete(nullptr);
+}
+
+/**
+ * @brief Ejecuta checkOTAUpdateEx() en un task FreeRTOS dedicado con
+ * stack propio, en vez de correrlo directo sobre el `loopTask`.
+ *
+ * El caller (típicamente el callback MQTT, corriendo en `loopTask`)
+ * se bloquea esperando el resultado, así que el comportamiento
+ * síncrono no cambia para quien lo invoca — solo cambia en qué stack
+ * corre la parte pesada (TLS/mbedtls).
+ */
+int checkOTAUpdateInTask(const OtaConfig &config) {
+  OtaTaskContext ctx;
+  ctx.config = config;
+  ctx.result = ESP32OTAPull::HTTP_FAILED;
+  ctx.done = xSemaphoreCreateBinary();
+
+  if (!ctx.done) {
+    Serial.println("⚠ No se pudo crear semáforo OTA, corriendo en loopTask");
+    return checkOTAUpdateEx(config);
+  }
+
+  TaskHandle_t taskHandle = nullptr;
+  const BaseType_t created = xTaskCreate(otaTaskEntry, "ota_check", OTA_TASK_STACK_SIZE, &ctx, 1, &taskHandle);
+  if (created != pdPASS) {
+    Serial.println("⚠ No se pudo crear task OTA, corriendo en loopTask");
+    vSemaphoreDelete(ctx.done);
+    return checkOTAUpdateEx(config);
+  }
+
+  xSemaphoreTake(ctx.done, portMAX_DELAY);
+  vSemaphoreDelete(ctx.done);
+  return ctx.result;
+}
+
 void checkOTAUpdate(const OtaConfig &config) {
   checkOTAUpdateEx(config);
 }
@@ -303,7 +364,7 @@ void registerOtaRemoteAction() {
   mqttHandlerRegisterAction("check_ota",
     [](const JsonDocument& /*doc*/, const char* /*topic*/, String& detail) -> bool {
       const OtaConfig config = {CFG_OTA_JSON_URL, CFG_FIRMWARE_VERSION, CFG_OTA_CHECK_INTERVAL_MS};
-      const int ret = checkOTAUpdateEx(config);
+      const int ret = checkOTAUpdateInTask(config);
       detail = errtext(ret);
       return ret == ESP32OTAPull::UPDATE_OK ||
              ret == ESP32OTAPull::NO_UPDATE_AVAILABLE ||
